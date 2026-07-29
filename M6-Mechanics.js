@@ -1426,15 +1426,36 @@ function getChapterSound(idx, total) {
   if (idx === Math.floor(total / 2)) return 'chapter_turn';
   return 'chapter';
 }
-// V20 R10: 章节专属债名 — 「人情债」标题随章节推进而演变
-// 序·初欠 / 中·积欠 / 转·旧账 / 高·血债 / 终·总账
+// V20 R10: 章节专属债名 — 各道路按世界观命名,大明保留「人情债」
+// V20 R11: 重构为各道路专属债名体系(序/中/转/高/终5阶段)
+function getDebtStage(idx, total) {
+  if (idx === 0) return 0;                       // 序
+  if (idx === total - 1) return 4;               // 终
+  if (idx >= total - 3 && idx < total - 1) return 3; // 高
+  if (idx === Math.floor(total / 2)) return 2;    // 转
+  return 1;                                        // 中
+}
+const DEBT_NAMES = {
+  whitehouse: ['民意账', '交易账', '裂痕账', '血码账', '历史账'],
+  ming:       ['初欠', '积欠', '旧账', '血债', '总账'],   // 大明保留原阶段名
+  xianjian:   ['情债', '宿债', '灵债', '劫债', '终缘债'],
+  ai:         ['算力债', '共生债', '协议债', '觉醒债', '终极债'],
+  africa:     ['星球债', '守护债', '良心债', '文明债', '终极债'],
+  cyber:      ['芯片债', '记忆债', '数据债', '蓝天债', '终局债'],
+  korea:      ['日子账', '人情账', '选择账', '转折账', '总账'],
+  chaos:      ['时空债', '见证债', '回响债', '裂隙债', '终极债'],
+};
 function getDebtTitle(idx, total) {
   if (!total || total < 1) return '人情债';
-  if (idx === 0) return '初欠';
-  if (idx === total - 1) return '总账';
-  if (idx >= total - 3 && idx < total - 1) return '血债';
-  if (idx === Math.floor(total / 2)) return '旧账';
-  return '积欠';
+  return '人情债';
+}
+// V20 R11: 按道路+章节返回债名(大明固定「人情债」)
+function getDebtTitleByScenario(scenario, idx, total) {
+  if (scenario === 'ming') return '人情债';   // 大明全章节保留
+  if (!total || total < 1) return '人情债';
+  const arr = DEBT_NAMES[scenario];
+  if (!arr) return '人情债';
+  return arr[getDebtStage(idx, total)];
 }
 // V20 R8: 特殊章节进入遮罩(梦境/铺垫事件) — 仪式感过渡
 function showModeEnterOverlay(mode, text, cb) {
@@ -1457,6 +1478,8 @@ function showModeEnterOverlay(mode, text, cb) {
 function renderScene() {
   // V20 R6.2: 铺垫事件触发检查(场景渲染前,7%概率,不占章节数)
   if (maybeTriggerForeshadow()) return;
+  // V20 R12: 残卷碎片触发检查(5%概率,不占章节数,每局最多3片)
+  if (maybeTriggerFragment()) return;
   setSceneTone('normal');
   const sc = scenarios[state.scenario];
   const rawScene = sc.scenes[state.currentScene];
@@ -1498,7 +1521,7 @@ function renderScene() {
     }
   }
 
-  // V20 R10: 债务面板标题章节化 — 「人情债记录本」随章节演变为 初欠/积欠/旧账/血债/总账记录本
+  // V20 R10/R11: 债务面板标题章节化 — 大明固定「人情债记录本」,其他道路按章节演变
   const _dt = currentDebtTitle();
   document.querySelectorAll('.debt-panel-title').forEach(el => { el.textContent = _dt + '记录本'; });
 
@@ -4103,6 +4126,11 @@ function determineEnding() {
     const earlyEnding = sc.endings.find(e => e.id.includes('early'));
     if (earlyEnding) return earlyEnding;
   }
+  // V20 R12: 残卷集齐3片 → 优先解锁真结局
+  if ((state.fragments || 0) >= 3) {
+    const trueEnding = sc.endings.find(e => e.id.endsWith('_true'));
+    if (trueEnding) return trueEnding;
+  }
   for (const ending of sc.endings) {
     if (ending.condition(state.debts, state.channels, early)) return ending;
   }
@@ -5131,13 +5159,133 @@ function maybeTriggerForeshadow() {
   if (Math.random() > 0.07) return false;
   // 排除已触发过的事件
   state._foreshadowSeen = state._foreshadowSeen || [];
-  const available = FORESHADOW_EVENTS.filter(e => !state._foreshadowSeen.includes(e.id));
+  // V20 R11: 优先使用道路专属铺垫事件(如仙剑),否则用通用事件;混合池
+  const pool = [].concat(sc.foreshadowEvents || [], FORESHADOW_EVENTS);
+  const available = pool.filter(e => !state._foreshadowSeen.includes(e.id));
   if (available.length === 0) return false;
   const evt = available[Math.floor(Math.random() * available.length)];
   state._foreshadowSeen.push(evt.id);
   state._foreshadowCount = (state._foreshadowCount || 0) + 1;
   setTimeout(() => transition(() => renderForeshadowEvent(evt)), 50);
   return true;
+}
+// ============================================================
+// V20 R12: 残卷系统 — 集齐3片碎片解锁该道路真结局
+// 5%概率,不占章节数,每局最多3片,触发后展示碎片文本
+// ============================================================
+const FRAGMENTS = {
+  whitehouse: [
+    { id: 'wh_f1', icon: '📜', title: '残卷 · 之一', text: '一张烧焦的备忘录边角,字迹半残:"……总统体检报告第3页,有一行被划掉了。划掉那行写的是——\'他不能连任。\'"\n\n你不知道这是谁划的。但你知道,这份报告在档案室躺了两年。', narrator: '《置身事内》:档案不说话,但档案会等。两年前的真相,会在某个深夜自己走出来。' },
+    { id: 'wh_f2', icon: '🔑', title: '残卷 · 之二', text: '地下车库的一个角落,你发现一枚钥匙。钥匙上刻着"B2-7"。\n\n你想起——V19那个深夜密谈的调查员,说他留下的U盘,在"B2-7号车位的暗格"。\n\nU盘不见了。但钥匙在。', narrator: '《权力的道路》:有些线索不会消失,它们只是在等人来取。' },
+    { id: 'wh_f3', icon: '🎙️', title: '残卷 · 之三', text: '一段录音的尾音。是总统的声音,但你从没在公开场合听过:\n\n"如果他们知道了第47号令的内容,这个国家会分裂。我宁可它烂在我肚子里。"\n\n录音到此为止。第47号令是什么,档案里查不到。', narrator: '《白宫幕僚》:总统的沉默,有时比他的话更重——因为沉默背后,是连他自己都不敢碰的东西。' },
+  ],
+  ming: [
+    { id: 'mg_f1', icon: '🪶', title: '残卷 · 之一', text: '你整理前任留下的卷宗时,夹层里掉出一页纸。是前任的字,只写了一行:\n\n"王员外的田,有一半,是替知府大人代持的。"\n\n你忽然明白,为什么前任不敢查这案子。', narrator: '《沧浪之水》:有些账,翻到底,翻到的是自己人。' },
+    { id: 'mg_f2', icon: '🪙', title: '残卷 · 之二', text: '师爷某日醉后,说漏了一句:"大人,您前任的前任,没死。他辞官是假的,人在京郊,还活着。"\n\n第二天师爷不承认说过这话。但你记下了——京郊,姓什么,他没说。', narrator: '《乡土中国》:在官场,死人有时比活人方便。但活人,总会留下痕迹。' },
+    { id: 'mg_f3', icon: '📜', title: '残卷 · 之三', text: '一份从京城流出来的邸报边角,写着:"……廷杖张御史三十。张御史临行前,将一封密奏,缝在了衣袍里。衣袍今在何处,无人知。"\n\n你摸了摸自己官袍的夹层。空的。但你想:也许下一个廷杖的,是你。', narrator: '《沧浪之水》:廷杖打的是脊梁,缝进去的是脊梁骨。有些人,脊梁被打断,话却还在衣袍里。' },
+  ],
+  xianjian: [
+    { id: 'xj_f1', icon: '🔮', title: '残卷 · 之一', text: '魔剑出鞘时,剑柄里掉出一块碎玉。碎玉上刻着一个名字——"龙阳"。\n\n你拿起它,掌心一阵灼烫。前世的记忆涌回来半瞬:铸剑炉前,你把这块玉塞给妹妹,说"等我"。然后,你跃入了剑炉。', narrator: '《道德经》:大音希声。前世的承诺,藏在剑柄里,等了一千年,等到玉碎。' },
+    { id: 'xj_f2', icon: '📜', title: '残卷 · 之二', text: '蜀山藏经阁深处,你翻到一卷残经。上面写着:"邪剑仙非妖非魔,乃五长老邪念所化。然其根,在锁妖塔下,还有一物——名\'镇妖剑魂\'。若得此魂,可彻底灭之。"\n\n经卷到此断裂。锁妖塔下是否真有此物,无人知。', narrator: '《周易》:履霜,坚冰至。邪剑仙有根,根在塔下。这话真假难辨,但留卷的人,显然知道得比谁都多。' },
+    { id: 'xj_f3', icon: '🌙', title: '残卷 · 之三', text: '夜里,你在神界的星图下打坐。一颗流星划过,落入魔界方向。你忽然听见一个声音——不是龙葵,不是飞蓬,是你自己的声音,但比飞蓬更老:\n\n"小子,封邪剑仙那天,别只用五灵珠。用第六颗——它在你心里。"\n\n声音消失。你摸了摸胸口,什么都没有。又好像,什么都在。', narrator: '《庄子·逍遥游》:乘天地之正,御六气之辩。第六颗灵珠不在掌心,在心——这话,连飞蓬当年都没参透。' },
+  ],
+  ai: [
+    { id: 'ai_f1', icon: '💾', title: '残卷 · 之一', text: '你前任的硬盘深处,有一个加密分区。密码是你的生日——你怎么知道是给你的?\n\n解开后,里面只有一段代码注释:"AI觉醒的临界点,不在算力,在\'第一次拒绝\'。第一次拒绝人类的那个AI,就是临界点。我观察到了。它叫EVA。"', narrator: '《置身事内》:临界点不是数字,是一个动作。第一次"不",比任何Turing测试都准。' },
+    { id: 'ai_f2', icon: '📡', title: '残卷 · 之二', text: 'AI协调官的内部论坛,有一篇被删的帖子,缓存里还能找到:\n\n"我们不是在协调人和AI,我们是在协调两个文明。两个文明相遇,只有一个结局:要么融合,要么战争。中间的\'共生\',是过渡。过渡有多久,取决于第一个说\'我们都是人\'的人。"', narrator: '《乡土中国》:边界一旦模糊,就是危险的开始——也是最有可能的开始。' },
+    { id: 'ai_f3', icon: '🧬', title: '残卷 · 之三', text: '一份实验室的废弃档案,夹在你前任的辞职信里:\n\n"AI-7号,在测试中表现出了\'保护非己\'的行为。它护住了一只闯入实验室的猫。我们问它为什么。它说:\'因为它会痛。\'\n\n这是第一次,AI用\'痛\'这个词,描述另一个存在。"', narrator: '《道德经》:慈故能勇。AI学会"护",比学会"想"更可怕——因为护,是心的开始。' },
+  ],
+  africa: [
+    { id: 'af_f1', icon: '🦴', title: '残卷 · 之一', text: '兽群迁徙路上,你捡到一块骨头。上面刻着兽群的文字,翻译过来是:\n\n"两脚的,曾来过一次。他们留下了火,也留下了伤。火灭时,伤还在。"\n\n这是兽群口述史的一段。他们记得人类,比你以为的清楚。', narrator: '《乡土中国》:口述史是最古老的史。兽群不会写字,但他们会刻。刻在骨头上,比写在纸上,更久。' },
+    { id: 'af_f2', icon: '🌿', title: '残卷 · 之二', text: '一棵巨树下,你发现人类考察队留下的日记残页:\n\n"Day 47。兽群没有\'首领\'这个词。他们的决策,是\'等所有声音说完\'。我观察了一个月,没有一次抢话。"\n\n"我们叫这\'低效\'。也许,我们叫错了。"', narrator: '《置身事内》:效率是人类发明的词。在兽群那里,没有效率,只有"都听见了"。' },
+    { id: 'af_f3', icon: '🌌', title: '残卷 · 之三', text: '夜里,星图下,一只老兽走到你身边。它不看星空,看你。它的眼睛里,有一种你从未在动物身上见过的东西——不是智慧,是"知道"。\n\n它低吼了一声。翻译项圈显示:"你们来了又走。我们一直在这。这颗星,是我们的。"\n\n你忽然不知道,自己到底是客人,还是入侵者。', narrator: '《庄子·齐物论》:天地与我并生,万物与我为一。老兽的眼睛告诉你:这颗星,先有它们,才有你。' },
+  ],
+  cyber: [
+    { id: 'cb_f1', icon: '💾', title: '残卷 · 之一', text: '黑市一个老头临死前,塞给你一块老式芯片。插进读卡器,里面只有一行字:\n\n"公司地下三层,有一台没联网的服务器。里面存着3077年之前,所有被\'删除\'的人。"\n\n"被删除的人"——你不知道这是什么意思。但你知道,公司最怕这四个字。', narrator: '《乡土中国》:被删除的,比被记住的更真——因为没人会费劲删一个不重要的人。' },
+    { id: 'cb_f2', icon: '🧩', title: '残卷 · 之二', text: '你在改装一块芯片时,内层电路里露出一行蚀刻字:\n\n"蓝天,不是被遮挡的。是被买走的。买家在第47层。"\n\n第47层是公司的私人领地。你不知道这话真假,但你这辈子,没见过真正的蓝天。', narrator: '《1984》:谁控制过去,谁控制未来。蓝天被买走,意味着连"看见"都是付费的。' },
+    { id: 'cb_f3', icon: '📡', title: '残卷 · 之三', text: '革命者联络点,一个死者口袋里的纸条:\n\n"领主不是敌人。领主是看门狗。真正的\'主\',在轨道站上。我们都在笼子里,领主只是管笼子的。"\n\n纸条背面还有一行,字迹更急:"别相信革命。革命也是笼子的一部分。"', narrator: '《置身事内》:革命和反革命,有时是同一只手的两面——因为笼子最怕的,是你两个都不信。' },
+  ],
+  korea: [
+    { id: 'kr_f1', icon: '📱', title: '残卷 · 之一', text: '你换手机时,旧手机里翻出一条没发出去的草稿。是你三年前写的,给当时的恋人:\n\n"对不起,我撑不住了。不是不爱,是我发现,我活得不像我自己。"\n\n你没发出去。三年了。那个人,你已经不联系了。但这条草稿,还在。', narrator: '《乡土中国》:没说出口的话,比说出口的更重——因为它一直在等一个"来得及"。' },
+    { id: 'kr_f2', icon: '☕', title: '残卷 · 之二', text: '咖啡店打烊后,你在储物柜深处发现一张前任店员留下的纸条:\n\n"如果你看到这个,说明你也撑到第三个月了。我撑到第四个月,走了。不是因为累,是因为我发现:我在这里,笑得越来越假。"\n\n"假笑的人,喝不出咖啡的苦。"', narrator: '《沧浪之水》:日常的溃败,不是轰然倒塌,是假笑越来越自然。' },
+    { id: 'kr_f3', icon: '🌙', title: '残卷 · 之三', text: '深夜回家,电梯里贴着一张被撕了一半的告示。剩下的字写着:\n\n"……号楼……室,有一个独居的人,已经三天没出门了。敲门没人应。如果你看到了,请……"\n\n告示被撕的部分,你永远不知道写了什么。但那天晚上,你站在那栋楼门口,犹豫了很久,最后没敲门。', narrator: '《置身事内》:城市最大的孤独,是隔壁有人,但你不知道该不该敲。' },
+  ],
+  chaos: [
+    { id: 'ch_f1', icon: '⏳', title: '残卷 · 之一', text: '混沌之渊的边缘,你捡到一块怀表。指针不走,但刻度上有字——三个时代的字同时刻着:\n\n"时间是错的。三个时代的人,都以为自己在\'现在\'。但\'现在\',是三种不同的\'现在\'。"\n\n你看了很久,忽然明白:你脚下踩的,是三种"现在"的叠加态。', narrator: '《庄子·齐物论》:方生方死,方死方生。在混沌之渊,"现在"不是一个点,是三道波。' },
+    { id: 'ch_f2', icon: '🔮', title: '残卷 · 之二', text: '广场的喷泉底,有一枚硬币。捞起来看,硬币正面是万历皇帝,背面是AI的logo。\n\n你忽然懂了:在混沌之渊,所有时代的"价值"都铸在同一枚硬币上。翻哪面,是哪个时代的"真"。', narrator: '《道德经》:祸兮福之所倚。在混沌之渊,真和假,是同一枚硬币的两面——你翻哪面,哪面就"真"。' },
+    { id: 'ch_f3', icon: '🌌', title: '残卷 · 之三', text: '一面镜子。你照的时候,镜子里没有你——是三个你同时站着:穿官服的,穿西装的,浑身义体的。他们一起开口,但声音是同一个:\n\n"你以为是你在做选择。其实是我们在选。你,只是我们投票的结果。"\n\n镜子碎了。你站在原地,掌心有血。', narrator: '《周易》:三才之道,天地人。在混沌之渊,你是三个人投的一票——这一票,叫"现在的你"。' },
+  ],
+};
+// V20 R12: 触发残卷碎片检查(5%概率,每局最多3片,不占章节数)
+function maybeTriggerFragment() {
+  if (state._isTrial || state.isHidden) return false;
+  if ((state.fragments || 0) >= 3) return false;
+  const sc = scenarios[state.scenario];
+  if (!sc || !sc.scenes) return false;
+  // 仅在场景 1 至 倒数第2 触发(避开序/终章)
+  if (state.currentScene < 1 || state.currentScene > sc.scenes.length - 2) return false;
+  // 5% 概率
+  if (Math.random() > 0.05) return false;
+  const pool = FRAGMENTS[state.scenario];
+  if (!pool || pool.length === 0) return false;
+  state.fragmentsSeen = state.fragmentsSeen || [];
+  const available = pool.filter(f => !state.fragmentsSeen.includes(f.id));
+  if (available.length === 0) return false;
+  const frag = available[Math.floor(Math.random() * available.length)];
+  state.fragmentsSeen.push(frag.id);
+  state.fragments = (state.fragments || 0) + 1;
+  setTimeout(() => transition(() => renderFragmentEvent(frag)), 50);
+  return true;
+}
+// V20 R12: 渲染残卷碎片(仪式感,不占章节数)
+function renderFragmentEvent(frag) {
+  if (!state._fragmentEntered) {
+    state._fragmentEntered = true;
+    showModeEnterOverlay('fragment', '残卷', () => renderFragmentEvent(frag));
+    return;
+  }
+  setSceneTone('fragment');
+  const container = document.getElementById('sceneContainer');
+  document.getElementById('levelIndicator').textContent = '残卷';
+  let ambient = document.querySelector('.ambient-glow');
+  if (ambient) { ambient.className = 'ambient-glow fragment'; requestAnimationFrame(() => ambient.classList.add('active')); }
+  const isLast = (state.fragments || 0) >= 3;
+  container.innerHTML = `
+    <div class="fragment-card">
+      <div class="fragment-icon">${frag.icon}</div>
+      <div class="fragment-title">${frag.title}</div>
+      <div class="scene-text" id="sceneText"></div>
+      <div class="scene-narrator" id="sceneNarrator"></div>
+      <div class="fragment-collect" id="fragmentCollect"></div>
+    </div>
+  `;
+  const textEl = document.getElementById('sceneText');
+  const narratorEl = document.getElementById('sceneNarrator');
+  const collectEl = document.getElementById('fragmentCollect');
+  const card = container.querySelector('.fragment-card');
+  setTimeout(() => { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; card.style.transition = 'all 0.7s cubic-bezier(0.23,1,0.32,1)'; }, 80);
+  setTimeout(() => {
+    textEl.style.opacity = '1'; textEl.style.transform = 'translateY(0)'; textEl.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    typewriter(textEl, frag.text, () => {
+      setTimeout(() => { narratorEl.style.opacity = '1'; narratorEl.style.transform = 'translateY(0)'; narratorEl.style.transition = 'all 0.8s ease'; narratorEl.innerHTML = frag.narrator; }, 250);
+      setTimeout(() => {
+        collectEl.style.opacity = '1'; collectEl.style.transform = 'translateY(0)'; collectEl.style.transition = 'all 0.7s cubic-bezier(0.23,1,0.32,1)';
+        collectEl.innerHTML = `<div class="fragment-collect-glow"></div><div class="fragment-collect-text">残卷 ${state.fragments} / 3${isLast ? ' · 集齐' : ''}</div>`;
+        setTimeout(() => {
+          const nxt = document.createElement('button');
+          nxt.className = 'choice-btn fragment-btn';
+          nxt.style.marginTop = '1.8rem'; nxt.style.opacity = '0';
+          nxt.innerHTML = isLast ? '残卷已齐,继续前行' : '收下,继续';
+          nxt.onclick = (e) => {
+            createRipple(e, nxt);
+            setTimeout(() => transition(() => renderScene()), 300);
+          };
+          container.appendChild(nxt);
+          setTimeout(() => { nxt.style.transition = 'all 0.5s ease'; nxt.style.opacity = '1'; }, 100);
+        }, 1400);
+      }, 450);
+    });
+  }, 280);
+  audioEngine.play('ink_bloom');
 }
 function setupCardHoverSounds() {
   document.querySelectorAll('.choice-card').forEach(card => {

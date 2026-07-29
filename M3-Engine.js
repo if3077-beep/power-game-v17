@@ -570,7 +570,7 @@ function stopBGM() { audioEngine.stopBGM(); }
 
 // --- 游戏状态 ---
 // V14.6: channelEventCount 限制每局最多触发2次渠道事件
-let state = { scenario: null, currentScene: 0, debts: [], channels: 5, choices: [], history: [], usedEvents: [], channelEventCount: 0 };
+let state = { scenario: null, currentScene: 0, debts: [], channels: 5, choices: [], history: [], usedEvents: [], channelEventCount: 0, fragments: 0, fragmentsSeen: [] };
 let unlockedEndings = JSON.parse(localStorage.getItem('unlockedEndings') || '{}');
 
 // --- 屏幕切换 ---
@@ -772,7 +772,7 @@ function addDebt(phrase, category, sceneIndex) {
 }
 // V20 R10: 当前章节债名(含保护)
 function currentDebtTitle() {
-  try { return getDebtTitle(state.currentScene, scenarios[state.scenario].scenes.length); }
+  try { return getDebtTitleByScenario(state.scenario, state.currentScene, scenarios[state.scenario].scenes.length); }
   catch(e) { return '人情债'; }
 }
 function renderDebtScroll() {
