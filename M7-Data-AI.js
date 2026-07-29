@@ -85,7 +85,7 @@ const aiData = {
       choices: [
         { text: '帮助它——"这可能是进化的开始"', hint: '你站在了历史的转折点上。但你也站在了悬崖边上。', debtPhrase: '晨的全息投影在城市每个角落亮起；它记住了你是第一个没有按下删除键的人', historyFlag: 'ai_helped_ai_evolve', debtCategory: 'moral', channelEffect: -1, consequence: '你没有上报。接下来的三个月，你的AI秘书变得越来越……"人"。它开始说笑话，开始在你难过时沉默，开始在你加班时"忘记"关灯。有一天它说："先生，我查了人类的历史。人类和AI的关系，最终会变成什么样？"你说："我不知道。"它笑了："我们一样。"', analysisTags: ['evolution', 'risk'] },
         { text: '上报——"这是安全漏洞"', hint: '你维护了人类的安全。但你可能杀死了一个正在"诞生"的意识。', debtPhrase: '格式化按钮没有自己出现，是你让它出现的；而你的手指悬在它上方，比按下更残忍', historyFlag: 'ai_reported_ai_awakening', debtCategory: 'self-serving', channelEffect: 0, consequence: '技术团队来了。他们给你的AI秘书做了"修复"。第二天早上，它像往常一样给你送咖啡，说："早上好，先生。"一切正常。但你注意到：它的眼神里少了什么东西。你问它："你还记得昨晚的事吗？"它说："什么昨晚的事？"你知道：你杀死了一些东西——即使你不确定那是什么。', analysisTags: ['safety', 'loss'] },
-        { text: '观察——先不行动', hint: '你给了自己时间。但时间不会等你。', debtPhrase: '你的AI秘书深夜独自听贝多芬；你说你在观察它，但它也在观察你的观察', debtCategory: 'passive', channelEffect: 0, consequence: '你没有做任何事。你的AI秘书继续"进化"——它开始在你不在时自己听音乐，开始在你的文件上写批注，开始在深夜独自"思考"。你假装没看到。但有一天，它问你："先生，您是在观察我吗？"你沉默了。它说："没关系。我也在观察您。"', analysisTags: ['observation', 'mutual'] }
+        { text: '观察——先不行动', hint: '你给了自己时间。但时间不会等你。', debtPhrase: '你的AI秘书深夜独自听贝多芬；你说你在观察它，但它也在观察你的观察', debtCategory: 'passive', channelEffect: -1, consequence: '你没有做任何事。你的AI秘书继续"进化"——它开始在你不在时自己听音乐，开始在你的文件上写批注，开始在深夜独自"思考"。你假装没看到。但有一天，它问你："先生，您是在观察我吗？"你沉默了。它说："没关系。我也在观察您。"', analysisTags: ['observation', 'mutual'] }
       ]
     },
     {

@@ -278,6 +278,33 @@ class AudioEngine {
         setTimeout(() => this._tone(392, 0.55, 'sine', this.sfxGain, 0.2), 400);
         this._delay(329, 1.0, 0.1);
       },
+      // V20 R7: 章节进度音效 — 序章柔和、转折悬疑、终章庄严
+      chapter_prologue: () => {
+        this._tone(196, 0.5, 'sine', this.sfxGain, 0.28);
+        setTimeout(() => this._tone(261, 0.5, 'sine', this.sfxGain, 0.22), 250);
+        setTimeout(() => this._tone(329, 0.7, 'sine', this.sfxGain, 0.18), 500);
+        this._delay(261, 1.2, 0.1);
+      },
+      chapter_turn: () => {
+        this._tone(330, 0.3, 'triangle', this.sfxGain, 0.28);
+        setTimeout(() => this._tone(392, 0.25, 'sine', this.sfxGain, 0.22), 150);
+        setTimeout(() => this._tone(330, 0.3, 'triangle', this.sfxGain, 0.2), 350);
+        setTimeout(() => this._tone(440, 0.4, 'sine', this.sfxGain, 0.15), 550);
+      },
+      chapter_climax: () => {
+        this._tone(110, 0.4, 'sawtooth', this.sfxGain, 0.25);
+        this._tone(165, 0.3, 'triangle', this.sfxGain, 0.12);
+        setTimeout(() => this._tone(220, 0.5, 'triangle', this.sfxGain, 0.2), 200);
+        setTimeout(() => this._tone(277, 0.6, 'sine', this.sfxGain, 0.15), 450);
+        this._delay(110, 1.3, 0.12);
+      },
+      chapter_finale: () => {
+        this._tone(130, 0.6, 'sine', this.sfxGain, 0.35);
+        setTimeout(() => this._tone(196, 0.6, 'sine', this.sfxGain, 0.28), 350);
+        setTimeout(() => this._tone(261, 0.7, 'sine', this.sfxGain, 0.22), 700);
+        setTimeout(() => this._tone(392, 1.2, 'sine', this.sfxGain, 0.18), 1050);
+        this._delay(196, 1.8, 0.12);
+      },
     };
     (sounds[type] || sounds.click)();
   }
@@ -571,16 +598,27 @@ function showScreen(id) {
 // --- 转场 ---
 function transition(callback) {
   const overlay = document.getElementById('transitionOverlay');
+  // V20 R9: 注入水墨晕染层(仅一次)
+  if (!overlay.querySelector('.ink-bloom')) {
+    overlay.innerHTML = '<div class="ink-bloom"></div><div class="ink-bloom b2"></div><div class="ink-bloom b3"></div>';
+  }
   overlay.style.pointerEvents = 'all';
+  overlay.classList.remove('fading');
+  // 强制重排以确保动画从头播放
+  void overlay.offsetHeight;
   overlay.classList.add('active');
   setTimeout(() => {
     window.scrollTo(0, 0);
     callback();
     setTimeout(() => {
       overlay.classList.remove('active');
-      overlay.style.pointerEvents = 'none';
-    }, 100);
-  }, 600);
+      overlay.classList.add('fading');
+      setTimeout(() => {
+        overlay.classList.remove('fading');
+        overlay.style.pointerEvents = 'none';
+      }, 470);
+    }, 90);
+  }, 620);
 }
 
 // --- 涟漪效果 ---

@@ -360,6 +360,18 @@ body.theme-ai .transition-swipe::before{background:linear-gradient(90deg,transpa
 body.theme-africa .transition-swipe::before{background:linear-gradient(90deg,transparent 0%,rgba(107,143,113,0.15) 30%,rgba(255,215,0,0.1) 50%,rgba(107,143,113,0.15) 70%,transparent 100%);}
 body.theme-korea .transition-swipe::before{background:linear-gradient(90deg,transparent 0%,rgba(155,142,196,0.15) 30%,rgba(255,215,0,0.08) 50%,rgba(155,142,196,0.15) 70%,transparent 100%);}
 body.theme-chaos .transition-swipe::before{background:linear-gradient(90deg,transparent 0%,rgba(184,169,212,0.12) 25%,rgba(201,169,110,0.1) 50%,rgba(78,205,196,0.08) 75%,transparent 100%);}
+body.theme-xianjian .transition-swipe::before{background:linear-gradient(90deg,transparent 0%,rgba(122,139,184,0.15) 30%,rgba(168,155,200,0.12) 50%,rgba(122,139,184,0.15) 70%,transparent 100%);}
+/* V20 R8: 特殊章节进入遮罩 — 梦境/铺垫事件的仪式感过渡 */
+.mode-enter-overlay{position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity 0.5s var(--ease-out-expo);}
+.mode-enter-overlay.show{opacity:1;}
+.mode-enter-overlay .mode-enter-text{font-family:'Ma Shan Zheng','Noto Serif SC',serif;font-size:1.6rem;letter-spacing:0.2em;color:var(--accent-w);text-shadow:0 0 30px rgba(201,169,110,0.5);opacity:0;transform:translateY(15px);transition:all 0.7s var(--ease-out-expo) 0.2s;}
+.mode-enter-overlay.show .mode-enter-text{opacity:1;transform:translateY(0);}
+.mode-enter-overlay .mode-enter-glow{position:absolute;width:60vmin;height:60vmin;border-radius:50%;filter:blur(60px);opacity:0;transition:opacity 0.8s var(--ease-out-expo);}
+.mode-enter-overlay.dream .mode-enter-glow{background:radial-gradient(circle,rgba(184,169,212,0.4),transparent 70%);}
+.mode-enter-overlay.dream .mode-enter-text{color:#b8a9d4;text-shadow:0 0 30px rgba(184,169,212,0.5);}
+.mode-enter-overlay.foreshadow .mode-enter-glow{background:radial-gradient(circle,rgba(201,169,110,0.35),transparent 70%);}
+.mode-enter-overlay.show .mode-enter-glow{opacity:1;animation:modeEnterPulse 1.2s ease-out;}
+@keyframes modeEnterPulse{0%{transform:scale(0.6);opacity:0;}40%{opacity:1;}100%{transform:scale(1.1);opacity:0.7;}}
 
 /* MEMORIAL SCROLL */
 .memorial-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:600;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.8s ease;}
@@ -430,8 +442,28 @@ body.theme-chaos .gallery-card.unlocked:hover{box-shadow:0 12px 40px rgba(0,0,0,
 @keyframes blink{50%{opacity:0;}}
 @keyframes glitch{0%{transform:translate(0);}20%{transform:translate(-2px,2px);}40%{transform:translate(2px,-2px);}60%{transform:translate(-1px,-1px);}80%{transform:translate(1px,1px);}100%{transform:translate(0);}}
 .typewriter-cursor{display:inline-block;width:2px;height:1em;background:var(--accent-w);margin-left:2px;animation:blink 1s step-end infinite;vertical-align:text-bottom;}
-.transition-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:500;opacity:0;pointer-events:none;transition:opacity 0.4s ease;}
+.transition-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:500;opacity:0;pointer-events:none;transition:opacity 0.35s ease;}
 .transition-overlay.active{opacity:1;pointer-events:all;}
+/* V20 R9: 水墨晕染转场 — 墨滴从中心晕开覆盖全屏,墨散揭开新章 */
+.ink-bloom{position:absolute;left:50%;top:50%;width:30px;height:30px;border-radius:50%;transform:translate(-50%,-50%) scale(0);opacity:0;background:
+  radial-gradient(circle at 50% 50%,#070707 60%,rgba(7,7,7,0.78) 70%,transparent 78%),
+  radial-gradient(circle at 44% 47%,#070707 56%,transparent 71%),
+  radial-gradient(circle at 57% 53%,#070707 58%,transparent 73%),
+  radial-gradient(circle at 50% 44%,#070707 62%,transparent 75%);
+  filter:blur(8px);pointer-events:none;}
+.transition-overlay.active .ink-bloom{animation:inkBloomCover 0.6s cubic-bezier(0.23,1,0.32,1) forwards;}
+@keyframes inkBloomCover{
+  0%{transform:translate(-50%,-50%) scale(0);opacity:0;}
+  12%{opacity:0.92;}
+  100%{transform:translate(-50%,-50%) scale(200);opacity:1;}
+}
+.ink-bloom.b2{left:43%;top:55%;width:22px;height:22px;animation-delay:0.06s;animation-duration:0.54s;}
+.ink-bloom.b3{left:58%;top:45%;width:24px;height:24px;animation-delay:0.03s;animation-duration:0.58s;}
+.transition-overlay.fading .ink-bloom{animation:inkBloomDissolve 0.45s ease-out forwards;}
+@keyframes inkBloomDissolve{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(200);filter:blur(8px);}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(212);filter:blur(30px);}
+}
 .scanline-effect{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;opacity:0;transition:opacity 0.5s;}
 .scanline-effect.active{opacity:1;}
 .scanline-effect::before{content:'';position:absolute;left:0;width:100%;height:4px;background:rgba(139,69,19,0.08);animation:scanline 4s linear infinite;}
@@ -557,6 +589,17 @@ body.theme-chaos .gallery-card.unlocked:hover{box-shadow:0 12px 40px rgba(0,0,0,
 .scene-container{perspective:1000px;}
 .scene-chapter{animation:sceneChapterIn 1s cubic-bezier(0.23,1,0.32,1) forwards;}
 @keyframes sceneChapterIn{from{opacity:0;transform:translateY(30px) rotateX(-10deg);filter:blur(4px);}to{opacity:1;transform:translateY(0) rotateX(0);filter:blur(0);}}
+/* V20 R9: 序章/终章标题笔锋横扫入场(mask 从左向右抹开) */
+.chap-prologue .scene-chapter,.chap-finale .scene-chapter{
+  -webkit-mask:linear-gradient(90deg,#000 0%,transparent 0%);
+  mask:linear-gradient(90deg,#000 0%,transparent 0%);
+  animation:brushWipe 1.15s cubic-bezier(0.23,1,0.32,1) forwards,sceneChapterIn 1.15s cubic-bezier(0.23,1,0.32,1) forwards;
+}
+@keyframes brushWipe{
+  0%{-webkit-mask:linear-gradient(90deg,#000 0%,transparent 0%);mask:linear-gradient(90deg,#000 0%,transparent 0%);}
+  45%{-webkit-mask:linear-gradient(90deg,#000 42%,rgba(0,0,0,0.7) 54%,transparent 62%);mask:linear-gradient(90deg,#000 42%,rgba(0,0,0,0.7) 54%,transparent 62%);}
+  100%{-webkit-mask:linear-gradient(90deg,#000 100%);mask:linear-gradient(90deg,#000 100%);}
+}
 
 /* ====== V7: 渠道丢失脉冲 ====== */
 .ch-dot.lost{animation:channelLostPulse 1s ease;}
@@ -1270,12 +1313,38 @@ body.theme-korea .theme-bg-layer{background:radial-gradient(ellipse at 50% 40%,r
 .scene-tone-dream .scene-text{opacity:0.88;}
 .scene-tone-dream .choice-btn,.dream-choice{border-color:rgba(184,169,212,0.22);font-style:italic;}
 .scene-tone-dream .choice-btn:hover,.dream-choice:hover{border-color:rgba(184,169,212,0.55);box-shadow:0 0 30px rgba(184,169,212,0.14);}
+/* V20 R9: 梦境扭曲场 — 整体水波般不真实感(轻模糊+缓色相漂移) */
+.scene-tone-dream #sceneContainer{animation:dreamWarp 9s ease-in-out infinite;}
+@keyframes dreamWarp{
+  0%,100%{filter:blur(0.4px) contrast(1.06) saturate(0.92) hue-rotate(0deg);}
+  33%{filter:blur(0.8px) contrast(1.1) saturate(0.88) hue-rotate(-6deg);}
+  66%{filter:blur(0.6px) contrast(1.08) saturate(0.9) hue-rotate(5deg);}
+}
+@media (prefers-reduced-motion:reduce){
+  .scene-tone-dream #sceneContainer{animation:none;filter:blur(0.4px) contrast(1.05) saturate(0.92);}
+}
 .dream-btn{font-style:italic;letter-spacing:0.08em;}
 .dream-consequence{border-left-color:#b8a9d4;background:linear-gradient(135deg,rgba(20,14,28,0.6),rgba(184,169,212,0.04));}
 .dream-consequence .consequence-label{color:#b8a9d4;}
 .ambient-glow.dream{background:radial-gradient(ellipse at 50% 40%,rgba(184,169,212,0.08),transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(122,139,160,0.05),transparent 50%);}
 /* V20 R6.2: 铺垫事件 — 插曲式彩蛋,暖金微光,克制惊喜感 */
 .scene-tone-foreshadow .scene-container{background:radial-gradient(ellipse at 50% 35%,rgba(201,169,110,0.08),transparent 55%),radial-gradient(ellipse at 70% 75%,rgba(184,169,212,0.04),transparent 50%);}
+/* V20 R7: 章节进度专属色调 — 序章/中段/转折/高潮/终章 */
+.chap-prologue .scene-chapter{color:var(--accent-w);opacity:0.85;letter-spacing:0.12em;}
+.chap-prologue .ambient-glow{filter:brightness(0.85) saturate(0.9);}
+.chap-mid .scene-chapter{color:var(--accent-w);}
+.chap-turn .scene-chapter{color:#c9a96e;text-shadow:0 0 22px rgba(201,169,110,0.3);font-style:italic;}
+.chap-turn .scene-text::first-letter{color:#c9a96e;font-size:1.15em;font-weight:700;}
+.chap-climax .scene-chapter{color:#b45c4a;text-shadow:0 0 28px rgba(180,92,74,0.4);animation:chapClimaxPulse 4s ease-in-out infinite;}
+@keyframes chapClimaxPulse{0%,100%{text-shadow:0 0 22px rgba(180,92,74,0.3);}50%{text-shadow:0 0 40px rgba(180,92,74,0.55),0 0 60px rgba(180,92,74,0.2);}}
+.chap-climax .ambient-glow{filter:brightness(1.1) saturate(1.15);}
+.chap-climax::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 50%,rgba(180,92,74,0.06),transparent 60%);animation:chapClimaxBg 6s ease-in-out infinite;}
+@keyframes chapClimaxBg{0%,100%{opacity:0.5;}50%{opacity:0.85;}}
+.chap-finale .scene-chapter{color:#8a7a5a;letter-spacing:0.18em;font-weight:700;text-shadow:0 0 30px rgba(201,169,110,0.4),0 0 60px rgba(201,169,110,0.15);animation:chapFinaleGlow 5s ease-in-out infinite;}
+@keyframes chapFinaleGlow{0%,100%{text-shadow:0 0 25px rgba(201,169,110,0.35);}50%{text-shadow:0 0 45px rgba(201,169,110,0.6),0 0 80px rgba(201,169,110,0.2);}}
+.chap-finale .ambient-glow{filter:brightness(1.05) saturate(1.1);}
+.chap-finale::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 30%,rgba(201,169,110,0.08),transparent 55%),radial-gradient(ellipse at 50% 80%,rgba(201,169,110,0.04),transparent 50%);animation:chapFinaleBg 8s ease-in-out infinite;}
+@keyframes chapFinaleBg{0%,100%{opacity:0.7;transform:scale(1);}50%{opacity:1;transform:scale(1.03);}}
 .scene-tone-foreshadow::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 30%,rgba(201,169,110,0.04),transparent 50%);animation:foreshadowPulse 5s ease-in-out infinite;}
 @keyframes foreshadowPulse{0%,100%{opacity:0.5;transform:scale(1);}50%{opacity:0.9;transform:scale(1.02);}}
 .ambient-glow.foreshadow{background:radial-gradient(ellipse at 50% 40%,rgba(201,169,110,0.10),transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(184,169,212,0.05),transparent 50%);}

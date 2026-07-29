@@ -1418,6 +1418,32 @@ function setSceneTone(tone) {
   if (tone) screen.classList.add(`scene-tone-${tone}`);
 }
 
+// V20 R7: 根据章节进度返回音效类型
+function getChapterSound(idx, total) {
+  if (idx === 0) return 'chapter_prologue';
+  if (idx === total - 1) return 'chapter_finale';
+  if (idx >= total - 3 && idx < total - 1) return 'chapter_climax';
+  if (idx === Math.floor(total / 2)) return 'chapter_turn';
+  return 'chapter';
+}
+// V20 R8: 特殊章节进入遮罩(梦境/铺垫事件) — 仪式感过渡
+function showModeEnterOverlay(mode, text, cb) {
+  let overlay = document.querySelector('.mode-enter-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'mode-enter-overlay';
+    overlay.innerHTML = '<div class="mode-enter-glow"></div><div class="mode-enter-text"></div>';
+    document.body.appendChild(overlay);
+  }
+  overlay.className = `mode-enter-overlay ${mode}`;
+  const textEl = overlay.querySelector('.mode-enter-text');
+  if (textEl) textEl.textContent = text;
+  requestAnimationFrame(() => overlay.classList.add('show'));
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    setTimeout(() => { if (cb) cb(); }, 450);
+  }, 1100);
+}
 function renderScene() {
   // V20 R6.2: 铺垫事件触发检查(场景渲染前,7%概率,不占章节数)
   if (maybeTriggerForeshadow()) return;
@@ -1438,6 +1464,20 @@ function renderScene() {
   }
   const container = document.getElementById('sceneContainer');
   document.getElementById('levelIndicator').textContent = `${state.currentScene + 1} / ${sc.scenes.length}`;
+
+  // V20 R7: 章节专属色调 — 根据章节进度(序/中/转/终)叠加 chapter-tone
+  const gs = document.getElementById('game-screen');
+  if (gs) {
+    gs.classList.remove('chap-prologue','chap-mid','chap-turn','chap-climax','chap-finale');
+    const total = sc.scenes.length;
+    const idx = state.currentScene;
+    let chapClass = 'chap-mid';
+    if (idx === 0) chapClass = 'chap-prologue';
+    else if (idx === total - 1) chapClass = 'chap-finale';
+    else if (idx >= total - 3 && idx < total - 1) chapClass = 'chap-climax';
+    else if (idx === Math.floor(total / 2)) chapClass = 'chap-turn';
+    gs.classList.add(chapClass);
+  }
 
   // V7: 场景氛围光效
   let ambient = document.querySelector('.ambient-glow');
@@ -1504,7 +1544,8 @@ function renderScene() {
     });
   }, 400);
 
-  audioEngine.play('chapter');
+  // V20 R7: 章节进度音效 — 根据章节进度播放不同音效
+  audioEngine.play(getChapterSound(state.currentScene, sc.scenes.length));
 
   // V14.6: 低概率画面特效 — 局部高斯模糊(5%) / 碎片破碎(3%)
   triggerSceneEffects();
@@ -4857,6 +4898,12 @@ const DREAM_SEQUENCES = [
 ];
 // V20 R6: 渲染梦境章节
 function renderDream() {
+  // V20 R8: 梦境进入仪式感过渡(仅第一次)
+  if ((state._dreamIndex || 0) === 0 && !state._dreamEntered) {
+    state._dreamEntered = true;
+    showModeEnterOverlay('dream', '入梦', () => renderDream());
+    return;
+  }
   setSceneTone('dream');
   const idx = state._dreamIndex || 0;
   const dream = DREAM_SEQUENCES[idx];
@@ -4979,6 +5026,12 @@ const FORESHADOW_EVENTS = [
 ];
 // V20 R6.2: 渲染铺垫事件(插曲式,不占章节数)
 function renderForeshadowEvent(evt) {
+  // V20 R8: 铺垫事件进入仪式感过渡
+  if (!state._foreshadowEntered) {
+    state._foreshadowEntered = true;
+    showModeEnterOverlay('foreshadow', '插曲', () => renderForeshadowEvent(evt));
+    return;
+  }
   setSceneTone('foreshadow');
   const container = document.getElementById('sceneContainer');
   document.getElementById('levelIndicator').textContent = '插曲';
