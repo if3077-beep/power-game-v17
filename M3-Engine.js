@@ -305,6 +305,12 @@ class AudioEngine {
         setTimeout(() => this._tone(392, 1.2, 'sine', this.sfxGain, 0.18), 1050);
         this._delay(196, 1.8, 0.12);
       },
+      // V20 R10: 水墨晕染转场音效 — 墨滴低响 + 晕开低嗡,匹配ink-bloom动画
+      ink_bloom: () => {
+        this._tone(90, 0.18, 'sine', this.sfxGain, 0.32);
+        setTimeout(() => this._tone(55, 0.55, 'sine', this.sfxGain, 0.2), 90);
+        this._delay(60, 0.7, 0.1);
+      },
     };
     (sounds[type] || sounds.click)();
   }
@@ -607,6 +613,8 @@ function transition(callback) {
   // 强制重排以确保动画从头播放
   void overlay.offsetHeight;
   overlay.classList.add('active');
+  // V20 R10: 水墨晕染转场音效,与ink-bloom动画同步
+  if (typeof audioEngine !== 'undefined') audioEngine.play('ink_bloom');
   setTimeout(() => {
     window.scrollTo(0, 0);
     callback();
@@ -753,7 +761,7 @@ function addDebt(phrase, category, sceneIndex) {
     mel.textContent = phrase;
     mobile.appendChild(mel);
   }
-  document.getElementById('debtCount').textContent = `共 ${state.debts.length} 笔人情债`;
+  document.getElementById('debtCount').textContent = `共 ${state.debts.length} 笔 · ${currentDebtTitle()}`;
   // 自动滚动到底部展示新条目
   requestAnimationFrame(() => {
     const panel = document.getElementById('debtPanel');
@@ -761,6 +769,11 @@ function addDebt(phrase, category, sceneIndex) {
     if (mobile) mobile.scrollTo({ top: mobile.scrollHeight, behavior: 'smooth' });
   });
   playDebt();
+}
+// V20 R10: 当前章节债名(含保护)
+function currentDebtTitle() {
+  try { return getDebtTitle(state.currentScene, scenarios[state.scenario].scenes.length); }
+  catch(e) { return '人情债'; }
 }
 function renderDebtScroll() {
   // V14.7: 仅用于初始渲染（游戏开始时清空），逐条追加以保留入场动画
@@ -772,7 +785,7 @@ function renderDebtScroll() {
   ).join('');
   scroll.innerHTML = html;
   if (mobile) mobile.innerHTML = html;
-  count.textContent = `共 ${state.debts.length} 笔人情债`;
+  count.textContent = `共 ${state.debts.length} 笔 · ${currentDebtTitle()}`;
 }
 
 // --- 消息渠道 ---

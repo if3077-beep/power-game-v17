@@ -1426,6 +1426,16 @@ function getChapterSound(idx, total) {
   if (idx === Math.floor(total / 2)) return 'chapter_turn';
   return 'chapter';
 }
+// V20 R10: 章节专属债名 — 「人情债」标题随章节推进而演变
+// 序·初欠 / 中·积欠 / 转·旧账 / 高·血债 / 终·总账
+function getDebtTitle(idx, total) {
+  if (!total || total < 1) return '人情债';
+  if (idx === 0) return '初欠';
+  if (idx === total - 1) return '总账';
+  if (idx >= total - 3 && idx < total - 1) return '血债';
+  if (idx === Math.floor(total / 2)) return '旧账';
+  return '积欠';
+}
 // V20 R8: 特殊章节进入遮罩(梦境/铺垫事件) — 仪式感过渡
 function showModeEnterOverlay(mode, text, cb) {
   let overlay = document.querySelector('.mode-enter-overlay');
@@ -1477,7 +1487,20 @@ function renderScene() {
     else if (idx >= total - 3 && idx < total - 1) chapClass = 'chap-climax';
     else if (idx === Math.floor(total / 2)) chapClass = 'chap-turn';
     gs.classList.add(chapClass);
+    // V20 R10: BGM章节强度递进 — 序章柔和、转折微紧、高潮/终章略增音量提升紧迫感
+    if (audioEngine.bgmGain && audioEngine.ctx) {
+      const t = audioEngine.ctx.currentTime;
+      let v = 0.5;
+      if (chapClass === 'chap-prologue') v = 0.46;
+      else if (chapClass === 'chap-turn') v = 0.54;
+      else if (chapClass === 'chap-climax' || chapClass === 'chap-finale') v = 0.6;
+      audioEngine.bgmGain.gain.setTargetAtTime(v, t, 1.2);
+    }
   }
+
+  // V20 R10: 债务面板标题章节化 — 「人情债记录本」随章节演变为 初欠/积欠/旧账/血债/总账记录本
+  const _dt = currentDebtTitle();
+  document.querySelectorAll('.debt-panel-title').forEach(el => { el.textContent = _dt + '记录本'; });
 
   // V7: 场景氛围光效
   let ambient = document.querySelector('.ambient-glow');
@@ -1505,6 +1528,8 @@ function renderScene() {
     chapterEl.style.opacity = '1';
     chapterEl.style.transform = 'translateY(0)';
     chapterEl.style.transition = 'all 0.8s cubic-bezier(0.23,1,0.32,1)';
+    // V20 R10: 章节音效与标题入场同步(100ms对齐)
+    audioEngine.play(getChapterSound(state.currentScene, sc.scenes.length));
   }, 100);
 
   setTimeout(() => {
@@ -1543,9 +1568,6 @@ function renderScene() {
       }, 800);
     });
   }, 400);
-
-  // V20 R7: 章节进度音效 — 根据章节进度播放不同音效
-  audioEngine.play(getChapterSound(state.currentScene, sc.scenes.length));
 
   // V14.6: 低概率画面特效 — 局部高斯模糊(5%) / 碎片破碎(3%)
   triggerSceneEffects();
