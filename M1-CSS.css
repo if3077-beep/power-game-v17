@@ -298,6 +298,30 @@ body.theme-korea .intro-desc, body.theme-korea .intro-situation{line-height:2.4;
 .ending-analysis{max-width:600px;font-size:0.8rem;color:var(--muted);line-height:1.8;margin:0 auto 2rem;text-align:left;padding:1.5rem;background:var(--glass);border:1px solid var(--glass-border);opacity:0;animation:fadeUp 1s ease-out 1.4s both;}
 .ending-analysis h4{color:var(--accent-w);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.8rem;}
 .ending-quote{font-style:italic;color:var(--muted);font-size:0.85rem;margin-bottom:2rem;opacity:0;animation:fadeUp 1s ease-out 1.6s both;}
+/* V20 R9: AI 支线尾声样式 */
+.ending-agent-epilogue{
+  max-width:680px;margin:0 auto 2.2rem;padding:1.6rem 1.8rem;
+  border:1px solid rgba(201,169,110,0.25);border-radius:4px;
+  background:linear-gradient(135deg,rgba(20,18,16,0.7),rgba(40,32,24,0.5));
+  box-shadow:0 12px 40px rgba(0,0,0,0.4),inset 0 0 30px rgba(201,169,110,0.04);
+  opacity:0;animation:fadeUp 1s ease-out 1.9s both;position:relative;
+}
+.ending-agent-epilogue::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:60px;height:2px;background:var(--accent-w);opacity:0.6;
+}
+.ending-agent-epilogue .epilogue-badge{
+  font-size:0.78rem;letter-spacing:0.25em;color:var(--accent-w);
+  text-align:center;margin-bottom:1rem;text-transform:uppercase;
+}
+.ending-agent-epilogue .epilogue-text{
+  font-size:0.92rem;line-height:1.9;color:var(--ink);font-style:italic;
+  text-align:center;padding:0 0.5rem;
+}
+.ending-agent-epilogue .epilogue-tag{
+  margin-top:1rem;font-size:0.72rem;color:var(--muted);
+  letter-spacing:0.15em;text-align:center;opacity:0.7;
+}
 /* V18 Round 3: 社会学解读 + 哲思回响 + 雷达快照 */
 .ending-sociological{max-width:600px;font-size:0.8rem;color:var(--muted);line-height:1.9;margin:0 auto 2rem;text-align:left;padding:1.5rem;background:var(--glass);border:1px solid var(--glass-border);opacity:0;animation:fadeUp 1s var(--ease-out-expo) 1.7s both;}
 .ending-sociological h4{color:var(--accent-p);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.8rem;}

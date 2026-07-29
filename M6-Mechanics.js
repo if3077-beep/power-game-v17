@@ -4137,20 +4137,35 @@ function renderFinalEvent() {
 function determineEnding() {
   const sc = scenarios[state.scenario];
   const early = !!state.earlyExit;
-  // V12.2: 优先匹配 early ending（如果有early标志）
-  if (early) {
-    const earlyEnding = sc.endings.find(e => e.id.includes('early'));
-    if (earlyEnding) return earlyEnding;
+  // V20 R9 (P0-1): AI 支线结局接入主系统 — 若玩家走过 AI 连续支线,
+  // 在常规结局基础上附加 agentEpilogue(支线尾声),让 25 个结局摘要不再死代码
+  const agentEpilogueKey = (state.scenario === 'ai' && state._agentQuestEnding)
+    ? state._agentQuestEnding : null;
+  // 内部:计算基础结局(early / 残卷 / 常规)
+  const baseEnding = (() => {
+    // V12.2: 优先匹配 early ending（如果有early标志）
+    if (early) {
+      const earlyEnding = sc.endings.find(e => e.id.includes('early'));
+      if (earlyEnding) return earlyEnding;
+    }
+    // V20 R12: 残卷集齐3片 → 优先解锁真结局
+    if ((state.fragments || 0) >= 3) {
+      const trueEnding = sc.endings.find(e => e.id.endsWith('_true'));
+      if (trueEnding) return trueEnding;
+    }
+    for (const ending of sc.endings) {
+      if (ending.condition(state.debts, state.channels, early)) return ending;
+    }
+    return sc.endings[sc.endings.length - 1];
+  })();
+  if (agentEpilogueKey && typeof AGENT_QUEST_ENDINGS !== 'undefined' && AGENT_QUEST_ENDINGS[agentEpilogueKey]) {
+    // 返回一个附加了 agentEpilogue 的浅拷贝,避免污染原结局数据
+    return Object.assign({}, baseEnding, {
+      agentEpilogue: AGENT_QUEST_ENDINGS[agentEpilogueKey],
+      agentQuestId: agentEpilogueKey
+    });
   }
-  // V20 R12: 残卷集齐3片 → 优先解锁真结局
-  if ((state.fragments || 0) >= 3) {
-    const trueEnding = sc.endings.find(e => e.id.endsWith('_true'));
-    if (trueEnding) return trueEnding;
-  }
-  for (const ending of sc.endings) {
-    if (ending.condition(state.debts, state.channels, early)) return ending;
-  }
-  return sc.endings[sc.endings.length - 1];
+  return baseEnding;
 }
 
 // --- 生成身份卡 ---
@@ -4321,6 +4336,12 @@ function showEnding() {
     <div class="ending-verdict">${ending.verdict}</div>
     <div class="ending-analysis"><h4>深度解析</h4>${ending.analysis}</div>
     <div class="ending-quote">${ending.quote}</div>
+    ${ending.agentEpilogue ? `
+    <div class="ending-agent-epilogue">
+      <div class="epilogue-badge">🌐 智能体集群计划 · 支线尾声</div>
+      <div class="epilogue-text">${ending.agentEpilogue}</div>
+      <div class="epilogue-tag">— 你的「${ending.agentQuestId}」抉择 —</div>
+    </div>` : ''}
     <div class="ending-sociological" id="endingSociological"><h4>社会学解读</h4>${card.sociologicalReading}</div>
     <div class="ending-radar-snapshot" id="endingRadarWrap">
       <div class="radar-snap-title">— 你的选择画像 —</div>
