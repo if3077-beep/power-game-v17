@@ -1414,7 +1414,7 @@ function startGame(scenarioKey) {
 // V14.3: 场景色调切换
 function setSceneTone(tone) {
   const screen = document.getElementById('game-screen');
-  screen.classList.remove('scene-tone-encounter','scene-tone-crisis','scene-tone-random','scene-tone-final','scene-tone-extreme','scene-tone-normal');
+  screen.classList.remove('scene-tone-encounter','scene-tone-crisis','scene-tone-random','scene-tone-final','scene-tone-extreme','scene-tone-normal','scene-tone-dream');
   if (tone) screen.classList.add(`scene-tone-${tone}`);
 }
 
@@ -2412,9 +2412,19 @@ function makeChoice(index) {
     nextBtn.className = 'choice-btn';
     nextBtn.style.marginTop = '2rem';
     nextBtn.style.opacity = '0';
-    nextBtn.innerHTML = state.currentScene < sc.scenes.length - 1 ? '继续' : '查看结局';
+    // V20 R6: 试玩模式 — 第2次选择后按钮变为"结束试玩"
+    if (state._isTrial && state.choices.length >= 2) {
+      nextBtn.innerHTML = '结束试玩 · 回到首页';
+    } else {
+      nextBtn.innerHTML = state.currentScene < sc.scenes.length - 1 ? '继续' : '查看结局';
+    }
     nextBtn.onclick = (e) => {
       createRipple(e, nextBtn);
+      // V20 R6: 试玩模式限制 — 做完 2 次选择后,展示结束提示并回主页
+      if (state._isTrial && state.choices.length >= 2) {
+        setTimeout(() => endTrialPlay(), 300);
+        return;
+      }
       // V14.3: 极端延续事件拦截
       if (state._pendingExtreme) {
         const evt = state._pendingExtreme;
@@ -2452,6 +2462,28 @@ function makeChoice(index) {
       }, 300);
     };
     container.appendChild(nextBtn);
+
+    // V20 R6: 「继续做梦」— 概率出现的插曲分支,多出 2 个梦境章节(每局最多一次)
+    if (!state._isTrial && !state._dreamOffered && !state.isHidden
+        && state.currentScene >= 3 && state.currentScene < sc.scenes.length - 1
+        && Math.random() < 0.35) {
+      state._dreamOffered = true;
+      const dreamBtn = document.createElement('button');
+      dreamBtn.className = 'choice-btn dream-btn';
+      dreamBtn.style.marginTop = '0.8rem';
+      dreamBtn.style.opacity = '0';
+      dreamBtn.style.borderColor = 'rgba(184,169,212,0.45)';
+      dreamBtn.style.color = 'rgba(184,169,212,0.92)';
+      dreamBtn.style.background = 'linear-gradient(135deg,rgba(184,169,212,0.04),rgba(122,139,160,0.04))';
+      dreamBtn.innerHTML = '🌙 继续做梦';
+      dreamBtn.onclick = (e) => {
+        createRipple(e, dreamBtn);
+        state._dreamIndex = 0;
+        setTimeout(() => transition(() => renderDream()), 300);
+      };
+      container.appendChild(dreamBtn);
+      setTimeout(() => { dreamBtn.style.transition = 'all 0.5s ease'; dreamBtn.style.opacity = '1'; }, 300);
+    }
 
     // V12.2: AI道路提前退出 — 第4幕之后，若被动选择>=2，显示退出选项
     if (state.scenario === 'ai' && state.currentScene >= 3) {
@@ -4760,7 +4792,7 @@ function showTrialHint() {
   const hint = document.createElement('div');
   hint.className = 'trial-hint';
   hint.id = 'trialHint';
-  hint.innerHTML = '<div class="trial-hint-icon">⚡</div><div class="trial-hint-text">试玩中 · 选择会留下人情债<br>完整体验从首页选道路</div><button class="trial-hint-close" onclick="this.parentElement.remove()">×</button>';
+  hint.innerHTML = '<div class="trial-hint-icon">🌙</div><div class="trial-hint-text">试玩中 · 两段选择后回首页<br>想看完整故事,从首页选一条道路</div><button class="trial-hint-close" onclick="this.parentElement.remove()">×</button>';
   document.body.appendChild(hint);
   setTimeout(() => {
     if (hint.parentNode) {
@@ -4768,6 +4800,130 @@ function showTrialHint() {
       setTimeout(() => hint.remove(), 400);
     }
   }, 5000);
+}
+// V20 R6: 试玩结束 — 展示结束语并回主页
+function endTrialPlay() {
+  const overlay = document.createElement('div');
+  overlay.className = 'trial-end-overlay';
+  overlay.innerHTML = `
+    <div class="trial-end-card">
+      <div class="trial-end-icon">🌙</div>
+      <div class="trial-end-title">试玩到此为止</div>
+      <div class="trial-end-text">你已经走完两段选择。<br>完整故事在等着你——回首页选一条道路,慢慢走完它。</div>
+      <button class="trial-end-btn" onclick="this.closest('.trial-end-overlay').remove(); showScreen('landing'); resetGameState();">回到首页</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('show'));
+  audioEngine.play('chapter');
+}
+// V20 R6: 清理试玩状态(回首页时调用)
+function resetGameState() {
+  try {
+    state._isTrial = false;
+    state.choices = [];
+    state.debts = [];
+    state.currentScene = 0;
+  } catch(e) {}
+}
+
+// V20 R6: 「继续做梦」— 梦境序列池(通用,带场景化引语)
+// 设计:两个梦境章节,呼应玩家此前的选择,意识流风格,选择轻、重在"再回现实"
+const DREAM_SEQUENCES = [
+  {
+    chapter: '梦境其一 · 水镜',
+    title: '倒映的自己',
+    text: '你走进一面水镜。镜里的不是你——是另一个版本的你,穿着你没穿过的衣裳,说着你没说过的话。\n\n镜里的"你"转过身,看了你一眼,说:"如果当时你选了另一条路,我现在就是你。"\n\n水波荡开。镜里的人散成无数个影子,每个影子都在做一个你曾放弃的选择。其中一个,正回头看你。',
+    narrator: '《庄子·齐物论》:方其梦也,不知其梦也。梦之中又占其梦焉,觉而后知其梦也。',
+    choices: [
+      { text: '伸手去碰那个影子', debtPhrase: '指尖穿过影子,凉得像旧年的雨;你握住的不是另一个你,是一段没走完的路。', debtCategory: 'moral', consequence: '影子握住了你的手。一瞬间,你看见了那条没走的路——它通向哪里,你不知道。但你知道:它也曾是真实的一种。你松开手,影子对你点头,然后散进水波里。', analysisTags: ['empathy', 'alt_self'] },
+      { text: '对镜里的自己说"你替我走那条路"', debtPhrase: '你把没走完的路托付给镜中人;从此那个选择不再压你肩头,但镜里多了一双眼睛。', debtCategory: 'compromise', consequence: '镜里的"你"笑了:"好。但你得记住——我替你走,你也替我走。"你点头。原来每一条没走的路,都需要有人去走。你欠那个影子一句话,也欠自己一个回望。', analysisTags: ['delegation', 'parallel'] },
+      { text: '转身离开水镜', debtPhrase: '你拒绝了镜里的诱惑,但脚步声在身后回响;没走的那条路,比走过的路更安静。', debtCategory: 'passive', consequence: '你转身走。身后水镜里的影子没有追,只是看着你,一直到看不见。你忽然觉得后背发凉——像是有人在你身后,替你记着那些没做的事。', analysisTags: ['avoidance', 'haunting'] },
+    ]
+  },
+  {
+    chapter: '梦境其二 · 归途',
+    title: '一条走不完的路',
+    text: '梦里的路很长,两边是你见过的所有人——有的对你笑,有的背过身,有的什么也没说。\n\n路的尽头是一扇门。门后是什么,你不知道。但你听见门后有声音,像是很多年前的自己,在叫你的名字。\n\n你走过去。门没锁。',
+    narrator: '《道德经》:归根曰静,静曰复命。万物并作,吾以观复。',
+    choices: [
+      { text: '推开那扇门', debtPhrase: '门后空无一物,只有风;但风里有所有你说过的话,和没说出口的。', debtCategory: 'moral', consequence: '门后是一片白。没有声音,没有人。你站在门口,忽然懂了:那扇门不是终点,是出口。梦醒之前,你对那片白说了一句"我回来了"。没有人回答,但你觉得,有什么东西,松开了。', analysisTags: ['homecoming', 'release'] },
+      { text: '在门外坐下,不进去', debtPhrase: '你在门外坐了很久;有些路,走到门口就够了,不必每一扇门都推开。', debtCategory: 'passive', consequence: '你在门外坐下。风从门缝里出来,吹着你的脸。你听着门后那个叫你名字的声音,渐渐远了。你没有进去。但你知道:它一直在那里。也许下一次梦,你会推门。也许不会。', analysisTags: ['patience', 'threshold'] },
+      { text: '对着门后的声音喊"我记起来了"', debtPhrase: '你对着门喊出了三个字,但记起的不一定是你想记的;真相有时比遗忘更重。', debtCategory: 'self-serving', consequence: '门后安静了一瞬,然后那个声音笑了:"你记起来了。"接着,所有的声音都涌过来——你做过的每一个选择,都在门后等着你。你被它们淹没。醒来时,枕头湿了一片,分不清是汗还是泪。', analysisTags: ['reclamation', 'flood'] },
+    ]
+  }
+];
+// V20 R6: 渲染梦境章节
+function renderDream() {
+  setSceneTone('dream');
+  const idx = state._dreamIndex || 0;
+  const dream = DREAM_SEQUENCES[idx];
+  if (!dream) { transition(() => renderScene()); return; }
+  const container = document.getElementById('sceneContainer');
+  document.getElementById('levelIndicator').textContent = `梦境 ${idx + 1} / ${DREAM_SEQUENCES.length}`;
+  let ambient = document.querySelector('.ambient-glow');
+  if (ambient) { ambient.className = `ambient-glow dream`; requestAnimationFrame(() => ambient.classList.add('active')); }
+  container.innerHTML = `
+    <div class="scene-chapter dream-chapter">🌙 ${dream.chapter} · ${dream.title}</div>
+    <div class="scene-text" id="sceneText"></div>
+    <div class="scene-narrator" id="sceneNarrator"></div>
+    <div class="choices-container" id="choicesContainer"></div>
+  `;
+  const chapterEl = container.querySelector('.scene-chapter');
+  const textEl = document.getElementById('sceneText');
+  const narratorEl = document.getElementById('sceneNarrator');
+  const choicesEl = document.getElementById('choicesContainer');
+  setTimeout(() => { chapterEl.style.opacity = '1'; chapterEl.style.transform = 'translateY(0)'; chapterEl.style.transition = 'all 0.8s cubic-bezier(0.23,1,0.32,1)'; }, 100);
+  setTimeout(() => {
+    textEl.style.opacity = '1'; textEl.style.transform = 'translateY(0)'; textEl.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    typewriter(textEl, dream.text, () => {
+      setTimeout(() => { narratorEl.style.opacity = '1'; narratorEl.style.transform = 'translateY(0)'; narratorEl.style.transition = 'all 0.8s ease'; narratorEl.innerHTML = dream.narrator; }, 300);
+      setTimeout(() => {
+        choicesEl.style.opacity = '1'; choicesEl.style.transform = 'translateY(0)'; choicesEl.style.transition = 'all 0.8s cubic-bezier(0.23,1,0.32,1)';
+        dream.choices.forEach((choice, i) => {
+          const btn = document.createElement('button');
+          btn.className = `choice-btn cat-${choice.debtCategory || 'compromise'} dream-choice`;
+          btn.innerHTML = `<span class="choice-main-text">${choice.text}</span><span class="debt-preview">「${choice.debtPhrase}」</span>`;
+          btn.style.opacity = '0'; btn.style.transform = 'translateX(-20px)';
+          btn.onmouseenter = () => audioEngine.play('choice_hover');
+          btn.onclick = () => {
+            audioEngine.play('click');
+            addDebt(choice.debtPhrase, choice.debtCategory, state.currentScene);
+            try { saveSession(); } catch(e) {}
+            document.querySelectorAll('.choices-container .choice-btn').forEach((b, j) => {
+              b.style.pointerEvents = 'none';
+              if (j === i) { b.classList.add('clicked'); b.style.opacity = '1'; } else { b.style.opacity = '0.2'; b.style.filter = 'blur(1px)'; }
+            });
+            const conEl = document.createElement('div');
+            conEl.className = 'consequence-box dream-consequence';
+            conEl.innerHTML = `<div class="consequence-glow"></div><div class="consequence-label">梦境 · 回响</div><div class="consequence-text">${choice.consequence}</div><div class="debt-added">梦境人情债：「${choice.debtPhrase}」</div>`;
+            container.appendChild(conEl);
+            setTimeout(() => { conEl.style.transition = 'all 0.8s cubic-bezier(0.23,1,0.32,1)'; conEl.style.opacity = '1'; conEl.style.transform = 'translateY(0)'; }, 100);
+            setTimeout(() => {
+              const nxt = document.createElement('button');
+              nxt.className = 'choice-btn dream-btn';
+              nxt.style.marginTop = '2rem'; nxt.style.opacity = '0';
+              nxt.innerHTML = (idx + 1 < DREAM_SEQUENCES.length) ? '梦更深一层' : '从梦中醒来';
+              nxt.onclick = (e) => {
+                createRipple(e, nxt);
+                if (idx + 1 < DREAM_SEQUENCES.length) {
+                  state._dreamIndex = idx + 1;
+                  setTimeout(() => transition(() => renderDream()), 300);
+                } else {
+                  setTimeout(() => transition(() => renderScene()), 300);
+                }
+              };
+              container.appendChild(nxt);
+              setTimeout(() => { nxt.style.transition = 'all 0.5s ease'; nxt.style.opacity = '1'; }, 100);
+            }, 1800);
+          };
+          choicesEl.appendChild(btn);
+          setTimeout(() => { btn.style.transition = 'all 0.4s ease'; btn.style.opacity = '1'; btn.style.transform = 'translateX(0)'; }, 200 + i * 120);
+        });
+      }, 500);
+    });
+  }, 300);
+  audioEngine.play('chapter');
 }
 function setupCardHoverSounds() {
   document.querySelectorAll('.choice-card').forEach(card => {
