@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>权力的游戏 v19</title>
+<title>权力的游戏 v20</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Rajdhani:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Noto+Sans+KR:wght@300;400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
@@ -68,6 +68,13 @@
       <div class="card-era">Chapter II — 穿越</div>
       <h2>大明官场</h2>
       <p>穿越到万历年间，从七品知县做起。两本账、人情债、派系站队——<br><br>你能在这张网里活几集？</p>
+    </div>
+    <div class="choice-card" data-scenario="xianjian" onclick="renderPrelude('xianjian')" style="background:linear-gradient(135deg,rgba(122,139,160,0.05),rgba(184,169,212,0.08));">
+      <div class="card-atmosphere"></div>
+      <span class="card-icon">🗡️</span>
+      <div class="card-era">Chapter VIII — 奇幻</div>
+      <h2>仙剑奇侠传三</h2>
+      <p>你是景天，渝州城当铺朝奉。一把魔剑、一个红衣女子、一个等你千年的妹妹——<br><br>六界冒险，三生三世。这一次，不紧张，只冒险。</p>
     </div>
     <div class="choice-card" data-scenario="ai" id="aiCard" onclick="renderPrelude('ai')" style="display:none;">
       <div class="card-atmosphere"></div>
@@ -206,6 +213,7 @@
 <script src="M9-Data-3077.js"></script>
 <script src="M10-Data-Korea.js"></script>
 <script src="M11-Data-Chaos.js"></script>
+<script src="M12-Data-Xianjian.js"></script>
 <script src="M3-Engine.js"></script>
 <script src="M6-Mechanics.js"></script>
 <script>

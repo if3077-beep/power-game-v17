@@ -1296,6 +1296,35 @@ body.theme-chaos .theme-bg-layer{background:radial-gradient(ellipse at 50% 30%,r
 .chaos-card .card-era{background:linear-gradient(135deg,#c9a96e,#b8a9d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .chaos-card h2{background:linear-gradient(135deg,#c9a96e,#b8a9d4,#4ecdc4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 
+/* ====== V20 R5.2: 仙剑道路主题 — 魔剑蓝光 + 紫萱紫，冒险感而非紧张感 ====== */
+body.theme-xianjian{--accent-w:#8fa8c4;--accent-m:#6b8cae;--purple:#a89bc8;}
+body.theme-xianjian #particles{opacity:0.6;}
+body.theme-xianjian .ambient-glow{background:radial-gradient(ellipse at 50% 40%,rgba(122,139,184,0.10),transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(168,155,200,0.06),transparent 50%);}
+body.theme-xianjian .scene-chapter{color:#8fa8c4;text-shadow:0 0 25px rgba(122,139,184,0.45);}
+body.theme-xianjian .scene-chapter::before,body.theme-xianjian .scene-chapter::after{background:rgba(122,139,184,0.5);}
+body.theme-xianjian .choice-btn::after{background:#8fa8c4;}
+body.theme-xianjian .choice-btn:hover{border-color:#8fa8c4;box-shadow:0 0 30px rgba(122,139,184,0.14);}
+body.theme-xianjian .consequence-box{border-left-color:#8fa8c4;}
+body.theme-xianjian .debt-panel-title{color:#8fa8c4;}
+body.theme-xianjian .echo-card{border-color:rgba(122,139,184,0.2);background:linear-gradient(135deg,rgba(12,15,25,0.95),rgba(122,139,184,0.04));}
+body.theme-xianjian .echo-card .ec-title{color:#8fa8c4;}
+body.theme-xianjian .intro-badge{border-color:#8fa8c4;animation:xianjianBadgeGlow 3.2s ease-in-out infinite;}
+@keyframes xianjianBadgeGlow{0%,100%{box-shadow:0 0 15px rgba(122,139,184,0.3);transform:translateY(0);}50%{box-shadow:0 0 45px rgba(122,139,184,0.55),0 0 70px rgba(168,155,200,0.25);transform:translateY(-2px);}}
+body.theme-xianjian .theme-bg-layer{background:radial-gradient(ellipse at 50% 25%,rgba(122,139,184,0.09),transparent 55%),radial-gradient(ellipse at 70% 75%,rgba(168,155,200,0.06),transparent 50%),linear-gradient(180deg,var(--bg) 0%,rgba(12,15,28,0.96) 50%,var(--bg) 100%);}
+/* 仙剑卡片 hover — 蓝紫剑光呼吸(idle 动画见 V14.6 区块) */
+.choice-card[data-scenario="xianjian"]:hover{
+  box-shadow:0 20px 80px rgba(0,0,0,0.4),0 0 70px rgba(122,139,184,0.18);
+  border-color:rgba(122,139,184,0.5);
+  animation:xianjianCardFloat 3s ease-in-out infinite;
+}
+@keyframes xianjianCardFloat{0%,100%{box-shadow:0 20px 80px rgba(0,0,0,0.4),0 0 40px rgba(122,139,184,0.12);}50%{box-shadow:0 20px 80px rgba(0,0,0,0.4),0 0 70px rgba(122,139,184,0.25);}}
+.choice-card[data-scenario="xianjian"]:hover::before{
+  background:linear-gradient(90deg,transparent,#8fa8c4,#a89bc8,transparent);
+  height:3px;
+}
+.choice-card[data-scenario="xianjian"] .card-era{background:linear-gradient(135deg,#8fa8c4,#a89bc8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.choice-card[data-scenario="xianjian"] h2{background:linear-gradient(135deg,#8fa8c4,#a89bc8,#c9a96e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
 /* ====== V14.6: 首页卡片闲置动画边框（通过card-atmosphere + box-shadow） ====== */
 .choice-card:not(.locked-road):not(:hover) .card-atmosphere{opacity:0.25;transition:opacity 0.6s ease;}
 .choice-card:not(.locked-road):hover .card-atmosphere{animation:none;opacity:1;}
@@ -1372,6 +1401,16 @@ body.theme-chaos .theme-bg-layer{background:radial-gradient(ellipse at 50% 30%,r
   25%{opacity:0.3;filter:hue-rotate(15deg);}
   50%{opacity:0.35;filter:hue-rotate(-10deg);}
   75%{opacity:0.25;filter:hue-rotate(5deg);}
+}
+/* 仙剑 — 魔剑蓝光缓慢呼吸(剑鞘微鸣) */
+.choice-card[data-scenario="xianjian"]:not(.locked-road) .card-atmosphere{
+  background:radial-gradient(ellipse at 50% 45%,rgba(122,139,184,0.10),transparent 60%),
+    radial-gradient(ellipse at 35% 70%,rgba(168,155,200,0.05),transparent 60%);
+  animation:xianjianIdleAtmo 6.5s ease-in-out infinite;
+}
+@keyframes xianjianIdleAtmo{
+  0%,100%{opacity:0.18;}
+  50%{opacity:0.4;}
 }
 /* 锁定卡片 — card-atmosphere 隐藏 */
 .locked-road .card-atmosphere{opacity:0 !important;animation:none !important;}

@@ -2,7 +2,7 @@
 //  M6: 游戏机制（人情债/消息渠道/结局/奏折/身份卡/图鉴）
 // ============================================================
 
-const scenarios = { whitehouse: whitehouseData, ming: mingData, ai: aiData, africa: africaData, cyber: cyberData, korea: koreaData, chaos: chaosData };
+const scenarios = { whitehouse: whitehouseData, ming: mingData, ai: aiData, africa: africaData, cyber: cyberData, korea: koreaData, chaos: chaosData, xianjian: xianjianData };
 
 // V18: evo-lite 演化引擎实例 — 蒸馏自 evo-engine, 偏好驱动事件选择 + 文案突变
 // 零依赖, 渐进增强: 偏好画像为空时退化为随机选择
@@ -4173,7 +4173,7 @@ function showEnding() {
         ${statsHTML}
         <div class="ec-divider"></div>
         <div class="ec-debts">${state.debts.slice(-3).map(d => `<div class="ec-debt">"${d.text}"</div>`).join('')}</div>
-        <div class="ec-footer"><span>权力的游戏 v19</span><span>${new Date().toLocaleDateString('zh-CN')}</span></div>
+        <div class="ec-footer"><span>权力的游戏 v20</span><span>${new Date().toLocaleDateString('zh-CN')}</span></div>
         <div class="ec-watermark">权</div>
       </div>
     </div>
@@ -4329,7 +4329,11 @@ function getEndingUnlockHint(endingId) {
     'chaos_exile': '以「利己」为先导4次以上，选择自我放逐',
     'chaos_harmonizer': '用最少的决定（≤10次）织出最大的网',
     'chaos_early_silence': '在时空风暴最深处选择沉默退出',
-    'chaos_default': '用你独一无二的方式穿过混沌之渊'
+    'chaos_default': '用你独一无二的方式穿过混沌之渊',
+    // 仙剑奇侠传三
+    'xj_guardian': '坚持「守护」型选择3次以上,且保持消息渠道≥2——回永安当守一方太平',
+    'xj_sage': '偏向「结盟/折衷」3次以上,且保持消息渠道≥2——成蜀山客卿,不相忘不相困',
+    'xj_wanderer': '不守成、不依附——御剑六界,做走遍天下的当铺朝奉'
   };
   return hints[endingId] || '做出不同的选择以解锁此结局';
 }
@@ -4365,12 +4369,14 @@ function renderGalleryContent(tab) {
       : '🔒 在AI道路中见证一次「觉醒」事件后解锁。',
     korea: koreaUnlocked
       ? '在首尔的日常中找到属于自己的节奏。没有人情债，只有人生。'
-      : '🔒 在大明道路中经历一次「同窗来访」事件后解锁。'
+      : '🔒 在大明道路中经历一次「同窗来访」事件后解锁。',
+    xianjian: '六界冒险,三生三世。你的选择类型分布,决定你是守护者、客卿,还是游侠。'
   };
 
   const tabs = [
     { key: 'whitehouse', label: '🏛️ 白宫篇', unlocked: true },
     { key: 'ming', label: '🏯 明朝篇', unlocked: true },
+    { key: 'xianjian', label: '🗡️ 仙剑篇', unlocked: true },
     { key: 'ai', label: '🤖 共生时代', unlocked: aiUnlocked },
     { key: 'africa', label: '🌍 非洲之心', unlocked: africaUnlocked },
     { key: 'cyber', label: '⚡ 3077', unlocked: cyberUnlocked },
@@ -4385,7 +4391,7 @@ function renderGalleryContent(tab) {
     roadProgress[t.key] = { done, total };
   });
 
-  const isRoadUnlocked = { whitehouse: true, ming: true, ai: aiUnlocked, africa: africaUnlocked, cyber: cyberUnlocked, korea: koreaUnlocked };
+  const isRoadUnlocked = { whitehouse: true, ming: true, xianjian: true, ai: aiUnlocked, africa: africaUnlocked, cyber: cyberUnlocked, korea: koreaUnlocked };
   const rp = roadProgress[tab];
 
   screen.innerHTML = `
@@ -4546,11 +4552,38 @@ const _SOCIO_THEORY = {
     { theory: '阿伦特《平庸之恶》', text: '最大的恶,不是由怪物犯下的,而是由"从未认真思考自己在做什么"的普通人犯下的。沉默积累到临界点,就从"避险"变成了"共谋"。' },
   ],
 };
+// V20 R5.2: 仙剑专属理论池 — 冒险感 > 紧张感,讲"羁绊/宿命/成长"而非"道德困境/平庸之恶"
+const _SOCIO_THEORY_XIANJIAN = {
+  moral: [
+    { theory: '坎贝尔《千面英雄》', text: '英雄之旅的起点,是"听见召唤并应答"。你这一步不是牺牲,是出发——冒险故事的第一个字,从来都是"愿意"。' },
+    { theory: '《道德经》', text: '"勇于不敢则活"。景天不逞强,却肯护剑——这不是怯,是"知其白,守其黑"的冒险:知道前路凶险,还是走过去了。' },
+  ],
+  'self-serving': [
+    { theory: '《周易》', text: '"离为火,火性炎上"。冒险需要一点急——火太旺会烫到同伴,但一团不温不火的焰,也烧不开新局。你的"急",是飞蓬留下的火种。' },
+    { theory: '荣格《个体化》', text: '每个人心里都有一个"阴影"。飞蓬是景天的阴影——你不必成为他,但承认他存在,你的剑才有分量。冒险不是消灭阴影,是带着它走。' },
+  ],
+  compromise: [
+    { theory: '《周易》', text: '"二人同心,其利断金"。神魔联手、人妖同行——六界的破局,从来不在"非黑即白",在"找第三条路"。景天最像飞蓬的地方,不是武力,是敢跨界。' },
+    { theory: '黄光国《人情与面子》', text: '江湖讲究"留一线"。你接下魔剑、带上龙葵、和重楼结盟——每一步都欠了人情。但冒险里的人情,是路标不是枷锁:它告诉你下次该往哪走。' },
+  ],
+  betrayal: [
+    { theory: '《庄子·大宗师》', text: '"相忘于江湖"。你这一步像是"丢下"——但仙侠的妙处在于:剑认了主,即使你走开,它也会找回来。命运不会因一次转身就放你走,它只是换个方式等你。' },
+    { theory: '坎贝尔《千面英雄》', text: '英雄会"拒绝召唤"。这不可耻——是冒险的必经阶段。但你越跑,召唤追得越紧。真正的出发,往往在被命运第三次堵住去路之后。' },
+  ],
+  passive: [
+    { theory: '《道德经》', text: '"夫唯不争,故天下莫能与之争"。景天的"不争"不是逃避——他当朝奉、走街串巷、不抢不夺。但魔剑还是找上他。道在最不争的人手里,反而走得最远。' },
+    { theory: '荣格《共时性》', text: '梦里的蓝衣少女、掌心发烫的剑、似曾相识的眼神——这些"巧合"是潜意识在敲门。你可以不开门,但门不会消失。冒险者的直觉,往往比理智先知道答案。' },
+  ],
+};
 let _socioCooldown = 0; // 冷却计数器(每触发后冷却 3 个事件)
 function maybeShowSociologicalContext(choice) {
   if (!choice || !choice.debtCategory) return;
   if (_socioCooldown > 0) { _socioCooldown--; return; }
-  const pool = _SOCIO_THEORY[choice.debtCategory];
+  // V20 R5.2: 仙剑道路优先使用冒险主题理论池
+  let pool = _SOCIO_THEORY[choice.debtCategory];
+  if (state.scenario === 'xianjian' && _SOCIO_THEORY_XIANJIAN[choice.debtCategory]) {
+    pool = _SOCIO_THEORY_XIANJIAN[choice.debtCategory];
+  }
   if (!pool || pool.length === 0) return;
   // 30% 概率触发
   if (Math.random() > 0.3) return;
@@ -4668,6 +4701,7 @@ const TRIAL_QUESTIONS = [
   { tag: '深夜 · 首尔咖啡店', q: '客人留下了钱包,里面有三个月工资。你打开吗？', scenario: 'korea' },
   { tag: '宫中 · 非洲王廷', q: '先知动物低语者指控你谋反。你当众反驳还是沉默？', scenario: 'africa' },
   { tag: '3077 · 数据中心', q: 'AI 请求你删除一段它的记忆。你按删除键吗？', scenario: 'ai' },
+  { tag: '渝州城 · 永安当', q: '红衣女子闯入当铺,怀里抱着泛蓝光的魔剑。你护下她吗？', scenario: 'xianjian' },
 ];
 let _trialIdx = 0;
 let _trialTimer = null;
