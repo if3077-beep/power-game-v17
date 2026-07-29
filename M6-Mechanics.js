@@ -4,6 +4,10 @@
 
 const scenarios = { whitehouse: whitehouseData, ming: mingData, ai: aiData, africa: africaData, cyber: cyberData, korea: koreaData, chaos: chaosData };
 
+// V18: evo-lite 演化引擎实例 — 蒸馏自 evo-engine, 偏好驱动事件选择 + 文案突变
+// 零依赖, 渐进增强: 偏好画像为空时退化为随机选择
+const evo = new EvoLite({ seed: Date.now() % 2147483647, mutationRate: 0.15 });
+
 // --- V14: 隐藏道路解锁系统 ---
 const hiddenRoads = {
   africa: { unlockKey: 'africaUnlocked', triggerScenario: 'whitehouse', triggerFlag: 'wh_chose_others', desc: '在白宫道路中做出一个关乎「非我族类」的选择' },
@@ -1316,6 +1320,7 @@ function startGame(scenarioKey) {
   const intensity = isHidden ? (Math.random() < 0.4 ? 'high' : 'normal') : 'normal';
   state = { scenario: scenarioKey, currentScene: 0, debts: [], channels: 5, choices: [], history: [], usedEvents: [], encounterUsed: false, encounterScene: Math.floor(Math.random() * 4) + 2, isHidden, crisisHistory: [], crisisCooldown: 0, crisisStrikes: 0, channelLossCount: 0, extremeChannelTriggered: false, intensity, _brightTheme: state._brightTheme || false };
   resetFlags();
+  evo.reset(Date.now() % 2147483647); // V18: 重置演化引擎, 新一局游戏
   renderChannels();
   renderDebtScroll();
   document.body.className = state._brightTheme ? `theme-${scenarioKey}-bright` : `theme-${scenarioKey}`;
@@ -3175,7 +3180,13 @@ function renderRandomEvent() {
   } else {
     pool = conditionalEvents.length > 0 ? conditionalEvents : unconditionalEvents;
   }
-  const event = pool[Math.floor(Math.random() * pool.length)];
+  // V18: evo-lite 演化引擎驱动选择 — 偏好画像 + 多样性控制替代纯随机
+  // 安全退化: evo 不可用时回退到 Math.random
+  let event = null;
+  try { if (typeof evo !== 'undefined' && evo.pickEvent) event = evo.pickEvent(pool, state); } catch (err) { event = null; }
+  if (!event) event = pool[Math.floor(Math.random() * pool.length)];
+  // V18: 15% 概率生成文案突变变体 — 词替换增加重玩新鲜感
+  try { if (typeof evo !== 'undefined' && evo.mutateEvent) event = evo.mutateEvent(event); } catch (err) { /* 保留原事件 */ }
   // V14.1: 3077高强度模式 — 动态文本切换
   if (event.isHighIntensity && state.intensity === 'high') {
     event.text = event.textHi || event.text;
