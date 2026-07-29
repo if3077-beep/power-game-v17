@@ -18,7 +18,7 @@ let pendingCalibration = null; // 待应用的校准值
 const hiddenRoads = {
   africa: { unlockKey: 'africaUnlocked', triggerScenario: 'whitehouse', triggerFlag: 'wh_chose_others', desc: '在白宫道路中做出一个关乎「非我族类」的选择' },
   cyber:  { unlockKey: 'cyberUnlocked',  triggerScenario: 'ai',          triggerFlag: 'ai_helped_ai_evolve', desc: '在AI道路中见证一次「觉醒」事件' },
-  korea:  { unlockKey: 'koreaUnlocked',  triggerScenario: 'ming',        triggerFlag: 'ming_friend_visit',   desc: '在大明道路中经历一次「同窗来访」事件' },
+  korea:  { unlockKey: 'koreaUnlocked',  triggerScenario: 'ming',        triggerFlag: 'ming_followed_private', desc: '在大明道路中融入官场的人情网' },
   chaos:  { unlockKey: 'chaosUnlocked',  triggerScenario: null,          triggerFlag: null,                  desc: '只能通过点击「解锁全部结局」按钮的华丽动画后解锁' },
 };
 let pendingUnlock = null; // 本局待解锁的隐藏道路
@@ -4294,6 +4294,21 @@ function showEnding() {
     if (aiCard) aiCard.style.display = '';
   }
 
+  // V20 R13: 保底解锁 — 累计通关3局后自动解锁所有隐藏道路
+  const gamesCompleted = parseInt(localStorage.getItem('gamesCompleted') || '0', 10) + 1;
+  localStorage.setItem('gamesCompleted', String(gamesCompleted));
+  if (gamesCompleted >= 3) {
+    Object.values(hiddenRoads).forEach(cfg => {
+      if (!localStorage.getItem(cfg.unlockKey)) {
+        localStorage.setItem(cfg.unlockKey, 'true');
+      }
+    });
+    // 刷新隐藏卡片显示
+    ['africaCard','cyberCard','koreaCard','aiCard'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.style.display = '';
+    });
+  }
+
   if (ending.atmosphere === 'confetti') createConfetti();
   if (ending.atmosphere === 'dark') createDarkAtmosphere();
   audioEngine.play('ending');
@@ -4533,7 +4548,7 @@ function renderGalleryContent(tab) {
       : '🔒 在AI道路中见证一次「觉醒」事件后解锁。',
     korea: koreaUnlocked
       ? '在首尔的日常中找到属于自己的节奏。没有人情债，只有人生。'
-      : '🔒 在大明道路中经历一次「同窗来访」事件后解锁。',
+      : '🔒 在大明道路中融入官场的人情网后解锁。',
     xianjian: '六界冒险,三生三世。你的选择类型分布,决定你是守护者、客卿,还是游侠。'
   };
 
