@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>权力的游戏 v18</title>
+<title>权力的游戏 v19</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Rajdhani:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Noto+Sans+KR:wght@300;400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
@@ -39,6 +39,15 @@
   <h1>权 力 的 游 戏</h1>
   <p class="subtitle" id="landingSubtitle"></p>
   <div class="divider-line"></div>
+  <!-- V19 R4.1: 前期留存钩子 — 3秒试玩预览条(吸引非文字游戏群体) -->
+  <div class="trial-preview" id="trialPreview" role="region" aria-label="快速试玩预览">
+    <div class="trial-label">⚡ 3秒试玩 · 不读长文 · 直接选择</div>
+    <div class="trial-card" id="trialCard" role="button" tabindex="0" onclick="startTrialPlay()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();startTrialPlay();}">
+      <div class="trial-scene-tag" id="trialSceneTag">凌晨 3:17 · 白宫</div>
+      <div class="trial-question" id="trialQuestion">总统来电："现在就签这份授权令。" 你签吗？</div>
+      <div class="trial-cta">点击试玩 →</div>
+    </div>
+  </div>
   <div class="chaos-entry" id="chaosEntry" style="display:none;" onclick="renderPrelude('chaos')">
     <span class="chaos-entry-line"></span>
     <span class="chaos-entry-icon">🌀</span>
@@ -139,6 +148,53 @@
 <div class="screen" id="ending-screen"></div>
 <div class="screen" id="gallery-screen"></div>
 
+<script>
+// V19 R4.4: ModuleGuard — 模块加载守护,检测关键模块加载失败并显示兜底 UI
+(function(){
+  var MODULES = [
+    { name: 'analysis-engine.js', check: function(){ return typeof AnalysisEngine !== 'undefined'; } },
+    { name: 'evo-lite.js', check: function(){ return typeof EvoLite !== 'undefined'; } },
+    { name: 'calibrate.js', check: function(){ return typeof CalibratePanel !== 'undefined'; } },
+    { name: 'M4-Data-WhiteHouse.js', check: function(){ return typeof whitehouseData !== 'undefined'; } },
+    { name: 'M5-Data-Ming.js', check: function(){ return typeof mingData !== 'undefined'; } },
+    { name: 'M3-Engine.js', check: function(){ return typeof AudioEngine !== 'undefined'; } },
+    { name: 'M6-Mechanics.js', check: function(){ return typeof scenarios !== 'undefined'; } },
+  ];
+  window.__moduleCheck = function(){
+    var failed = [];
+    for (var i = 0; i < MODULES.length; i++) {
+      try { if (!MODULES[i].check()) failed.push(MODULES[i].name); }
+      catch(e){ failed.push(MODULES[i].name); }
+    }
+    return failed;
+  };
+  window.__showModuleError = function(failed){
+    var box = document.createElement('div');
+    box.id = 'moduleGuardError';
+    box.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(10,8,6,0.96);padding:2rem;font-family:serif;';
+    box.innerHTML = '<div style="max-width:520px;text-align:center;color:#c9a96e;">'
+      + '<div style="font-size:1.4rem;margin-bottom:1rem;letter-spacing:0.1em;">模块加载失败</div>'
+      + '<div style="font-size:0.85rem;color:#8a7a5a;line-height:1.8;margin-bottom:1.5rem;">以下文件未正确加载,游戏可能无法正常运行:</div>'
+      + '<div style="font-size:0.78rem;color:#b45c4a;font-family:monospace;line-height:1.9;margin-bottom:1.5rem;">' + failed.join('<br>') + '</div>'
+      + '<div style="font-size:0.8rem;color:#8a7a5a;margin-bottom:1rem;">建议刷新页面重试;若问题持续,请检查网络或部署配置。</div>'
+      + '<button onclick="location.reload()" style="padding:0.6rem 2rem;background:rgba(201,169,110,0.1);border:1px solid #c9a96e;color:#c9a96e;font-family:serif;cursor:pointer;letter-spacing:0.1em;">刷新页面</button>'
+      + '</div>';
+    document.body.appendChild(box);
+  };
+  // DOMContentLoaded 后检查
+  window.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      var failed = window.__moduleCheck();
+      if (failed.length > 0) {
+        console.error('[ModuleGuard] 加载失败的模块:', failed);
+        window.__showModuleError(failed);
+      } else {
+        console.log('[ModuleGuard] 所有关键模块加载完成 ✓');
+      }
+    }, 100);
+  });
+})();
+</script>
 <script src="analysis-engine.js"></script>
 <script src="analysis-renderer.js"></script>
 <script src="evo-lite.js"></script>

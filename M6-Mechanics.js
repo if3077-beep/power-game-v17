@@ -3320,6 +3320,10 @@ function renderRandomEvent() {
             if (state.scenario === 'ming') inkSplash();
             addDebt(choice.debtPhrase, choice.debtCategory, state.currentScene);
             if (choice.channelEffect < 0) loseChannel(choice.debtPhrase);
+            // V19 R4.3: 社会学引语微弹窗 — 关键节点展示理论context(30%概率触发,不打断节奏)
+            try { maybeShowSociologicalContext(choice); } catch(e) {}
+            // V19 R4.5: 保存会话(刷新可恢复)
+            try { saveSession(); } catch(e) {}
 
             document.querySelectorAll('.choices-container .choice-btn').forEach((b, j) => {
               b.style.pointerEvents = 'none';
@@ -4109,6 +4113,8 @@ function generatePhilosophicalQuote(topCategoryKey) {
 // --- 显示结局 ---
 function showEnding() {
   showScreen('ending-screen');
+  // V19 R4.5: 游戏结束清除会话
+  try { clearSession(); } catch(e) {}
   document.getElementById('vignette').classList.remove('active');
   document.getElementById('scanline').classList.remove('active');
   document.getElementById('channelsBar').classList.remove('visible');
@@ -4167,7 +4173,7 @@ function showEnding() {
         ${statsHTML}
         <div class="ec-divider"></div>
         <div class="ec-debts">${state.debts.slice(-3).map(d => `<div class="ec-debt">"${d.text}"</div>`).join('')}</div>
-        <div class="ec-footer"><span>权力的游戏 v18</span><span>${new Date().toLocaleDateString('zh-CN')}</span></div>
+        <div class="ec-footer"><span>权力的游戏 v19</span><span>${new Date().toLocaleDateString('zh-CN')}</span></div>
         <div class="ec-watermark">权</div>
       </div>
     </div>
@@ -4213,6 +4219,8 @@ function restartGame(scenarioKey) {
   swipe.classList.add('active');
   stopBGM();
   audioEngine.play('click');
+  // V19 R4.5: 重启时清除会话
+  try { clearSession(); } catch(e) {}
   setTimeout(() => {
     swipe.classList.remove('active');
     startGame(scenarioKey);
@@ -4513,12 +4521,219 @@ function loadUnlockedEndings() {
   } catch (e) { /* ignore corrupt data */ }
 }
 
+// V19 R4.3: 社会学引语微弹窗 — 关键节点展示理论context
+// 基于 choice.debtCategory + scenario 匹配社会学/心理学理论库
+// 30%概率触发,不打断节奏;首局触发后冷却 3 个事件避免轰炸
+const _SOCIO_THEORY = {
+  moral: [
+    { theory: '费孝通《乡土中国》', text: '道德在中国社会不是抽象原则,而是"差序格局"——离你越近的人,你欠的越多。你这次的"守义",其实在重画你和谁的关系更近。' },
+    { theory: 'Cialdini《影响力》', text: '你说"不"的时候,触发了"承诺一致"原则的反面——你在用行动重塑未来的自己。每一次守义,都让下一次守义更容易,也让妥协更难。' },
+  ],
+  'self-serving': [
+    { theory: '社会交换论', text: '霍布斯说"人对人如狼"。你这次的选择,是"理性人"假设的标准答案——但契约社会的维系,恰恰需要有人不总是理性的。' },
+    { theory: '马基雅维利《君主论》', text: '"被恐惧比被爱更安全"——但马基雅维利也警告:恐惧的维系成本极高,一旦松动,反噬最猛。' },
+  ],
+  compromise: [
+    { theory: '《中庸》', text: '"中也者,天下之大本也"——但中庸不是数学中点,而是"时中":每个情境都有它自己的平衡点。你这次的折衷,是妥协还是时中,要看你有没有"守住什么"。' },
+    { theory: '黄光国《人情与面子》', text: '混合性关系中,人情交换是"算计过的让步"。你让了一步,但这一步的利息,对方会记到下一次需要你的时候。' },
+  ],
+  betrayal: [
+    { theory: '翟学伟《人情交换》', text: '背叛打破互惠平衡,修复成本极高。但比背叛更危险的,是"合理化背叛"——你开始相信自己没有错。' },
+    { theory: 'Milgram《服从权威》', text: '当系统替你承担道德责任,65%的人会做出超越底线的事。你这次的背叛,有多少是"你的",有多少是"系统的"?这个区分,决定了你之后会变成谁。' },
+  ],
+  passive: [
+    { theory: 'Asch《从众实验》', text: '75%的人至少从众一次。沉默不是中立——它是另一种参与方式。你这次没说"不",其实已经说了一个"是"。' },
+    { theory: '阿伦特《平庸之恶》', text: '最大的恶,不是由怪物犯下的,而是由"从未认真思考自己在做什么"的普通人犯下的。沉默积累到临界点,就从"避险"变成了"共谋"。' },
+  ],
+};
+let _socioCooldown = 0; // 冷却计数器(每触发后冷却 3 个事件)
+function maybeShowSociologicalContext(choice) {
+  if (!choice || !choice.debtCategory) return;
+  if (_socioCooldown > 0) { _socioCooldown--; return; }
+  const pool = _SOCIO_THEORY[choice.debtCategory];
+  if (!pool || pool.length === 0) return;
+  // 30% 概率触发
+  if (Math.random() > 0.3) return;
+  const t = pool[Math.floor(Math.random() * pool.length)];
+  _socioCooldown = 3; // 触发后冷却 3 个事件
+  showSocioToast(t.theory, t.text);
+}
+function showSocioToast(theory, text) {
+  // 移除已有 toast 避免叠加
+  const existing = document.getElementById('socioToast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'socioToast';
+  toast.className = 'socio-toast';
+  toast.setAttribute('role', 'alert');
+  toast.innerHTML = `
+    <div class="socio-theory">${theory}</div>
+    <div class="socio-text">${text}</div>
+    <button class="socio-close" aria-label="关闭">×</button>
+  `;
+  document.body.appendChild(toast);
+  // 入场动画
+  requestAnimationFrame(() => toast.classList.add('show'));
+  // 关闭按钮
+  toast.querySelector('.socio-close').addEventListener('click', () => hideSocioToast());
+  // 5秒自动消失
+  setTimeout(() => hideSocioToast(), 5500);
+}
+function hideSocioToast() {
+  const toast = document.getElementById('socioToast');
+  if (!toast) return;
+  toast.classList.remove('show');
+  toast.classList.add('hide');
+  setTimeout(() => toast.remove(), 400);
+}
+
 // V14.6: 首页初始化 — 卡牌hover音效 + 标题乱码动效
 let _glitchTimer = null;
 let _glitchActive = false;
 function initLanding() {
   setupCardHoverSounds();
   resetTitleGlitch();
+  initTrialPreview();
+  // V19 R4.5: 会话恢复提示 — 若上次未完成游戏,显示"继续上次"入口
+  showResumePrompt();
+}
+
+// V19 R4.5: 会话恢复 — 刷新不丢进度
+function saveSession() {
+  try {
+    if (!state || !state.scenario) return;
+    localStorage.setItem('pg_session', JSON.stringify({
+      scenario: state.scenario,
+      currentScene: state.currentScene,
+      channels: state.channels,
+      debts: state.debts,
+      choices: state.choices,
+      history: state.history,
+      usedEvents: state.usedEvents,
+      intensity: state.intensity,
+      isHidden: state.isHidden,
+      savedAt: Date.now(),
+    }));
+  } catch(e) {}
+}
+function clearSession() {
+  try { localStorage.removeItem('pg_session'); } catch(e) {}
+}
+function loadSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('pg_session') || 'null');
+    if (!s || !s.scenario) return null;
+    // 超过 24 小时的会话视为过期
+    if (Date.now() - (s.savedAt || 0) > 86400000) { clearSession(); return null; }
+    return s;
+  } catch(e) { return null; }
+}
+function showResumePrompt() {
+  const sess = loadSession();
+  if (!sess) return;
+  const label = scenarios[sess.scenario] ? scenarios[sess.scenario].label : sess.scenario;
+  // 在 landing 顶部插入"继续上次"提示
+  const banner = document.createElement('div');
+  banner.className = 'resume-banner';
+  banner.innerHTML = '<div class="resume-icon">⏸</div><div class="resume-text">上次在 <b>' + label + '</b> 第 ' + (sess.currentScene + 1) + ' 章<br><span class="resume-sub">消息渠道剩 ' + sess.channels + ' · 人情债 ' + sess.debts.length + ' 笔</span></div><div class="resume-btns"><button class="resume-continue" onclick="resumeSession()">继续</button><button class="resume-discard" onclick="discardSession()">放弃</button></div>';
+  const landing = document.getElementById('landing');
+  if (landing) landing.insertBefore(banner, landing.querySelector('.trial-preview'));
+}
+function resumeSession() {
+  const sess = loadSession();
+  if (!sess) return;
+  // 恢复 state
+  state = Object.assign({}, state, sess);
+  delete state.savedAt;
+  // 直接进入游戏
+  if (typeof audioEngine !== 'undefined') audioEngine.enable();
+  showScreen('game-screen');
+  renderScene();
+  // 隐藏 banner
+  const b = document.querySelector('.resume-banner');
+  if (b) b.remove();
+}
+function discardSession() {
+  clearSession();
+  const b = document.querySelector('.resume-banner');
+  if (b) b.remove();
+}
+
+// V19 R4.1: 3秒试玩预览条 — 吸引非文字游戏群体的前期留存钩子
+// 滚动展示最锋利的选择题,点击进入迷你试玩场景(跳过 intro 长文)
+const TRIAL_QUESTIONS = [
+  { tag: '凌晨 3:17 · 白宫', q: '总统来电："现在就签这份授权令。" 你签吗？', scenario: 'whitehouse' },
+  { tag: '万历十五年 · 大明', q: '师爷递来两本账："大人,看哪本？" 你选红的还是蓝的？', scenario: 'ming' },
+  { tag: '2077 · 新东京', q: '黑市芯片 3 倍利润,但买家是革命军。你卖吗？', scenario: 'cyber' },
+  { tag: '深夜 · 首尔咖啡店', q: '客人留下了钱包,里面有三个月工资。你打开吗？', scenario: 'korea' },
+  { tag: '宫中 · 非洲王廷', q: '先知动物低语者指控你谋反。你当众反驳还是沉默？', scenario: 'africa' },
+  { tag: '3077 · 数据中心', q: 'AI 请求你删除一段它的记忆。你按删除键吗？', scenario: 'ai' },
+];
+let _trialIdx = 0;
+let _trialTimer = null;
+function initTrialPreview() {
+  const card = document.getElementById('trialCard');
+  if (!card) return;
+  // 轮播展示问题 (每 4 秒切换)
+  _trialIdx = Math.floor(Math.random() * TRIAL_QUESTIONS.length);
+  updateTrialCard();
+  if (_trialTimer) clearInterval(_trialTimer);
+  _trialTimer = setInterval(() => {
+    _trialIdx = (_trialIdx + 1) % TRIAL_QUESTIONS.length;
+    updateTrialCard();
+  }, 4000);
+  // hover 时暂停轮播
+  card.addEventListener('mouseenter', () => { if (_trialTimer) { clearInterval(_trialTimer); _trialTimer = null; } });
+  card.addEventListener('mouseleave', () => {
+    if (!_trialTimer) {
+      _trialTimer = setInterval(() => {
+        _trialIdx = (_trialIdx + 1) % TRIAL_QUESTIONS.length;
+        updateTrialCard();
+      }, 4000);
+    }
+  });
+}
+function updateTrialCard() {
+  const t = TRIAL_QUESTIONS[_trialIdx];
+  const tagEl = document.getElementById('trialSceneTag');
+  const qEl = document.getElementById('trialQuestion');
+  if (!tagEl || !qEl) return;
+  // 淡出 → 切换 → 淡入
+  tagEl.style.opacity = '0'; qEl.style.opacity = '0';
+  setTimeout(() => {
+    tagEl.textContent = t.tag;
+    qEl.textContent = t.q;
+    tagEl.style.opacity = ''; qEl.style.opacity = '';
+  }, 280);
+}
+// V19 R4.1: 启动试玩 — 直接进入当前轮播场景,跳过 intro,从第 1 个事件开始
+function startTrialPlay() {
+  const t = TRIAL_QUESTIONS[_trialIdx];
+  if (_trialTimer) { clearInterval(_trialTimer); _trialTimer = null; }
+  // 自动开启音频
+  if (typeof audioEngine !== 'undefined') audioEngine.enable();
+  // 跳过校准面板,使用默认画像直接开始
+  pendingCalibration = null;
+  // 直接开始游戏,标记为试玩模式 (state._isTrial = true)
+  transition(() => {
+    startGame(t.scenario);
+    state._isTrial = true;
+    // 试玩提示:首屏右下角浮层
+    setTimeout(() => showTrialHint(), 800);
+  });
+}
+function showTrialHint() {
+  const hint = document.createElement('div');
+  hint.className = 'trial-hint';
+  hint.id = 'trialHint';
+  hint.innerHTML = '<div class="trial-hint-icon">⚡</div><div class="trial-hint-text">试玩中 · 选择会留下人情债<br>完整体验从首页选道路</div><button class="trial-hint-close" onclick="this.parentElement.remove()">×</button>';
+  document.body.appendChild(hint);
+  setTimeout(() => {
+    if (hint.parentNode) {
+      hint.style.opacity = '0';
+      setTimeout(() => hint.remove(), 400);
+    }
+  }, 5000);
 }
 function setupCardHoverSounds() {
   document.querySelectorAll('.choice-card').forEach(card => {
