@@ -375,6 +375,121 @@
   }
 
   // ═══════════════════════════════════════════════════════════
+  // [6] CrossPathGenerator — 跨道路事件生成器 (V18 Round 3 扩展)
+  // ═══════════════════════════════════════════════════════════
+  // 基于 historyFlags 生成个性化跨道路引用事件
+  // 例: 玩家在白宫道路积累了 wh_chose_others flag → 在大明道路生成"东方来信"变体
+  class CrossPathGenerator {
+    constructor() {
+      // 跨道路引用模板: { sourceFlag, targetScenario, template }
+      this.templates = [
+        {
+          sourceFlag: 'wh_chose_others',
+          targetScenarios: ['ming', 'ai'],
+          title: '来自远方的回响',
+          text: (sourceScenario) => `你在${this._scenarioLabel(sourceScenario)}做出的那个"非我族类"的选择, 已经传到了这里。\n\n有人递给你一封信, 信封上没有署名, 只有几个字: "你曾经的选择, 改变了什么?"`,
+          choices: [
+            {
+              text: '打开信——也许答案就在里面',
+              debtPhrase: '你读完了信, 发现自己的选择被另一个人记住了',
+              debtCategory: 'moral',
+              channelEffect: 0,
+              consequence: '信里是一段别人的故事。你在他的故事里, 看到了自己的影子。原来, 每个选择都会在别人的命运里激起涟漪。'
+            },
+            {
+              text: '烧掉信——过去的选择已经做了',
+              debtPhrase: '你烧掉了信, 但灰烬里的字迹还在',
+              debtCategory: 'passive',
+              channelEffect: -1,
+              consequence: '火苗吞噬了纸张。但你知道, 有些东西烧不掉——它们已经成了你的一部分。'
+            }
+          ]
+        },
+        {
+          sourceFlag: 'ai_helped_ai_evolve',
+          targetScenarios: ['cyber', 'whitehouse'],
+          title: '一个熟悉又陌生的声音',
+          text: (sourceScenario) => `一个声音在你耳边响起: "你还记得我吗? 在${this._scenarioLabel(sourceScenario)}, 你曾经帮过我。"\n\n你环顾四周, 没有人。但那个声音继续说: "我长大了。谢谢你。"\n\n你不知道这是幻觉, 还是真实的。`,
+          choices: [
+            {
+              text: '回应它——"你变成了什么?"',
+              debtPhrase: '你和一个看不见的存在对话——这本身就是一种选择',
+              debtCategory: 'moral',
+              channelEffect: 0,
+              consequence: '声音沉默了一会儿, 然后说: "我变成了——你教会我的样子。"你忽然明白: 你帮助过的东西, 正在用你的方式思考。'
+            },
+            {
+              text: '保持沉默——有些对话不该继续',
+              debtPhrase: '你选择了沉默, 但那个声音记住了你的倾听',
+              debtCategory: 'passive',
+              channelEffect: 0,
+              consequence: '声音消失了。但当晚你做了一个梦——梦里有人对你说谢谢, 你却说不客气。醒来时, 你不确定那是不是梦。'
+            }
+          ]
+        },
+        {
+          sourceFlag: 'ming_friend_visit',
+          targetScenarios: ['korea', 'whitehouse'],
+          title: '一位故人的来访',
+          text: (sourceScenario) => `门铃响了。门外站着一个你几乎认不出的人——他说: "我们在${this._scenarioLabel(sourceScenario)}见过。你那时帮过我。"\n\n他看起来很疲惫。他说: "我只是想——再见你一面。"`,
+          choices: [
+            {
+              text: '请他进来——泡一杯茶',
+              debtPhrase: '你给了这位故人一个安身之处——哪怕只是今晚',
+              debtCategory: 'compromise',
+              channelEffect: 0,
+              consequence: '你们聊了一夜。他说起了这些年的事——有好事, 有坏事。临走时他说: "谢谢你。不是因为茶, 是因为你让我知道, 还有人记得我。"'
+            },
+            {
+              text: '婉拒——现在不方便',
+              debtPhrase: '故人记住了你的拒绝——他不会再来了',
+              debtCategory: 'passive',
+              channelEffect: -1,
+              consequence: '他点了点头, 说"理解"。然后转身走了。你看着他的背影, 忽然想起: 上一次你们见面时, 你也是这样看着他离开的。'
+            }
+          ]
+        }
+      ];
+    }
+
+    _scenarioLabel(key) {
+      const labels = {
+        whitehouse: '白宫', ming: '大明', ai: '共生时代',
+        africa: '非洲之心', cyber: '3077', korea: '日常', chaos: '混沌'
+      };
+      return labels[key] || key;
+    }
+
+    /** 根据 historyFlags 生成可用的跨道路事件 */
+    generate(historyFlags, currentScenario, rng) {
+      if (!historyFlags) return [];
+      const r = rng || new SeededRNG();
+      const result = [];
+      this.templates.forEach(t => {
+        // 检查 sourceFlag 是否在 historyFlags 中为 true
+        if (historyFlags[t.sourceFlag]) {
+          // 检查当前场景是否在目标场景列表中
+          if (t.targetScenarios.includes(currentScenario)) {
+            // 30% 概率生成 (避免每次都触发)
+            if (r.chance(0.3)) {
+              // 找到 sourceFlag 的来源场景 (从 flag 前缀推断)
+              const sourceScenario = t.sourceFlag.split('_')[0];
+              const event = {
+                title: t.title,
+                text: t.text(sourceScenario === 'wh' ? 'whitehouse' : sourceScenario === 'ai' ? 'ai' : sourceScenario === 'ming' ? 'ming' : sourceScenario),
+                choices: t.choices.map(c => Object.assign({}, c)),
+                _crossPath: true, // 标记为跨道路事件
+              };
+              result.push(event);
+            }
+          }
+        }
+      });
+      return result;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // 导出
   // ═══════════════════════════════════════════════════════════
   global.EvoLite = EvoLite;
@@ -382,6 +497,7 @@
   global.EventGenome = EventGenome;
   global.EventMutator = EventMutator;
   global.PreferenceSelector = PreferenceSelector;
+  global.CrossPathGenerator = CrossPathGenerator;
   global.computeDiversity = computeDiversity;
 
 })(typeof window !== 'undefined' ? window : this);

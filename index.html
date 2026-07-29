@@ -192,6 +192,67 @@
     chaosEntry.style.display = '';
   }
 })();
+// V18 Round 3: 可访问性增强 — 键盘导航 + ARIA + 焦点管理
+(function initA11y() {
+  // 1. 全局键盘委托: Enter/Space 激活 [role="button"] 与带 onclick 的非表单元素
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target;
+    if (!el || el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
+    if (el.getAttribute('role') === 'button' || el.hasAttribute('onclick') || el.classList.contains('choice-card') || el.classList.contains('chaos-entry')) {
+      e.preventDefault();
+      el.click();
+    }
+  }, { passive: false });
+  // 2. 为可点击 div 增强 role + tabindex (landing 卡牌 / 混沌入口 / 道路卡)
+  function enhanceClickable() {
+    const sel = '.choice-card, .chaos-entry, [onclick]:not(button):not(a):not(input):not(textarea)';
+    document.querySelectorAll(sel).forEach(el => {
+      if (!el.getAttribute('role')) el.setAttribute('role', 'button');
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    });
+  }
+  enhanceClickable();
+  // 3. canvas aria-label — 让屏幕阅读器理解装饰性画布
+  const canvasLabels = {
+    'particles': '装饰性粒子背景动画',
+    'fateRiverCanvas': '命运河流 — 你的每次选择在此留下流光',
+    'radarCanvas': '五维选择画像雷达图',
+    'endingRadarCanvas': '本局选择画像雷达快照'
+  };
+  Object.entries(canvasLabels).forEach(([id, label]) => {
+    const c = document.getElementById(id);
+    if (c) { c.setAttribute('role', 'img'); c.setAttribute('aria-label', label); }
+  });
+  // 4. 焦点管理 — 屏幕切换时把焦点移到新屏幕 (键盘用户受益)
+  const _origShowScreen = window.showScreen;
+  if (typeof _origShowScreen === 'function') {
+    window.showScreen = function(id) {
+      const ret = _origShowScreen.apply(this, arguments);
+      const screen = document.getElementById(id);
+      if (screen) {
+        // 让屏幕可获焦但不破坏布局
+        screen.setAttribute('tabindex', '-1');
+        // 延迟聚焦, 等待转场动画渲染
+        setTimeout(() => { try { screen.focus({ preventScroll: true }); } catch(e){} }, 120);
+      }
+      return ret;
+    };
+  }
+  // 5. 跳过链接 (动态注入) — 键盘用户跳到主内容
+  const skip = document.createElement('a');
+  skip.href = '#landing';
+  skip.className = 'skip-link';
+  skip.textContent = '跳到主内容';
+  document.body.insertBefore(skip, document.body.firstChild);
+  // DOM 变更后重新增强 (动态生成的卡牌) — 防抖避免频繁扫描
+  let _enhanceTimer = null;
+  const obs = new MutationObserver(() => {
+    if (_enhanceTimer) return;
+    _enhanceTimer = setTimeout(() => { enhanceClickable(); _enhanceTimer = null; }, 200);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+})();
 // V14.6: 首页初始化 — 卡牌hover音效+标题乱码
 initLanding();
 </script>

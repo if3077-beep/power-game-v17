@@ -37,7 +37,18 @@
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
 *{margin:0;padding:0;box-sizing:border-box;}
+/* V18 Round 3: 移动端触摸适配 — 消除 300ms 点击延迟 + tap 高亮 */
+*{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Serif SC',sans-serif;overflow-x:hidden;line-height:1.8;-webkit-font-smoothing:antialiased;}
+/* V18 Round 3: prefers-reduced-motion 全局降级 */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important;}
+}
+/* V18 Round 3: 可访问性 — 跳过链接 + 键盘焦点可见 */
+.skip-link{position:fixed;top:0;left:0;z-index:10000;background:var(--accent-w);color:#1a1410;padding:0.6rem 1.2rem;font-family:'Noto Serif SC',serif;font-size:0.85rem;text-decoration:none;border-radius:0 0 8px 0;transform:translateY(-120%);transition:transform 0.25s var(--ease-out-expo);}
+.skip-link:focus{transform:translateY(0);outline:none;}
+:focus-visible{outline:2px solid var(--accent-w);outline-offset:3px;border-radius:2px;}
+.choice-card:focus-visible,.chaos-entry:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--accent-w);outline-offset:4px;}
 body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;}
 #particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
 #cursorGlow{position:fixed;width:300px;height:300px;border-radius:50%;pointer-events:none;z-index:1;background:radial-gradient(circle,rgba(201,169,110,0.06) 0%,transparent 70%);transform:translate(-50%,-50%);transition:opacity 0.3s;}
@@ -240,7 +251,20 @@ body.theme-korea .intro-desc, body.theme-korea .intro-situation{line-height:2.4;
 .ending-analysis{max-width:600px;font-size:0.8rem;color:var(--muted);line-height:1.8;margin:0 auto 2rem;text-align:left;padding:1.5rem;background:var(--glass);border:1px solid var(--glass-border);opacity:0;animation:fadeUp 1s ease-out 1.4s both;}
 .ending-analysis h4{color:var(--accent-w);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.8rem;}
 .ending-quote{font-style:italic;color:var(--muted);font-size:0.85rem;margin-bottom:2rem;opacity:0;animation:fadeUp 1s ease-out 1.6s both;}
-.ending-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp 1s ease-out 1.8s both;}
+/* V18 Round 3: 社会学解读 + 哲思回响 + 雷达快照 */
+.ending-sociological{max-width:600px;font-size:0.8rem;color:var(--muted);line-height:1.9;margin:0 auto 2rem;text-align:left;padding:1.5rem;background:var(--glass);border:1px solid var(--glass-border);opacity:0;animation:fadeUp 1s var(--ease-out-expo) 1.7s both;}
+.ending-sociological h4{color:var(--accent-p);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.8rem;}
+.ending-sociological .reading-label{color:var(--accent-w);font-weight:600;font-size:0.78rem;margin-bottom:0.6rem;letter-spacing:0.05em;}
+.ending-sociological .reading-insight{color:var(--text);opacity:0.85;margin-bottom:0.6rem;}
+.ending-sociological .reading-quote{color:var(--accent-w);font-style:italic;opacity:0.75;font-size:0.75rem;border-top:1px solid var(--glass-border);padding-top:0.6rem;}
+.ending-radar-snapshot{max-width:280px;margin:0 auto 2rem;text-align:center;opacity:0;animation:fadeUp 1s var(--ease-out-expo) 1.9s both;}
+.radar-snap-title{font-family:'Noto Serif SC',serif;font-size:0.7rem;letter-spacing:0.2em;color:var(--accent-w);opacity:0.7;margin-bottom:0.8rem;}
+.radar-snap-canvas-wrap{display:flex;justify-content:center;}
+.ending-philosophical{max-width:600px;font-size:0.85rem;color:var(--text);line-height:1.9;margin:0 auto 2rem;text-align:center;padding:1.8rem 2rem;background:var(--glass);border:1px solid var(--glass-border);opacity:0;animation:fadeUp 1s var(--ease-out-expo) 2.1s both;}
+.ending-philosophical h4{color:var(--accent-w);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.8rem;}
+.ending-philosophical .phil-quote-text{font-family:'Noto Serif SC',serif;font-style:italic;font-size:1rem;color:var(--text);opacity:0.9;line-height:1.8;margin-bottom:0.6rem;}
+.ending-philosophical .phil-quote-author{color:var(--accent-w);opacity:0.7;font-size:0.78rem;letter-spacing:0.05em;}
+.ending-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp 1s ease-out 2.3s both;}
 .ending-btn{padding:0.8rem 2rem;background:transparent;border:1px solid var(--card-border);color:var(--text);font-family:'Noto Serif SC',serif;font-size:0.9rem;cursor:pointer;transition:all 0.4s ease;position:relative;overflow:hidden;}
 .ending-btn::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(201,169,110,0.08),transparent 70%);opacity:0;transition:opacity 0.4s ease;}
 .ending-btn:hover{background:rgba(255,255,255,0.06);border-color:var(--accent-w);}
@@ -4074,6 +4098,121 @@ window.quickAnalyze = quickAnalyze;
   }
 
   // ═══════════════════════════════════════════════════════════
+  // [6] CrossPathGenerator — 跨道路事件生成器 (V18 Round 3 扩展)
+  // ═══════════════════════════════════════════════════════════
+  // 基于 historyFlags 生成个性化跨道路引用事件
+  // 例: 玩家在白宫道路积累了 wh_chose_others flag → 在大明道路生成"东方来信"变体
+  class CrossPathGenerator {
+    constructor() {
+      // 跨道路引用模板: { sourceFlag, targetScenario, template }
+      this.templates = [
+        {
+          sourceFlag: 'wh_chose_others',
+          targetScenarios: ['ming', 'ai'],
+          title: '来自远方的回响',
+          text: (sourceScenario) => `你在${this._scenarioLabel(sourceScenario)}做出的那个"非我族类"的选择, 已经传到了这里。\n\n有人递给你一封信, 信封上没有署名, 只有几个字: "你曾经的选择, 改变了什么?"`,
+          choices: [
+            {
+              text: '打开信——也许答案就在里面',
+              debtPhrase: '你读完了信, 发现自己的选择被另一个人记住了',
+              debtCategory: 'moral',
+              channelEffect: 0,
+              consequence: '信里是一段别人的故事。你在他的故事里, 看到了自己的影子。原来, 每个选择都会在别人的命运里激起涟漪。'
+            },
+            {
+              text: '烧掉信——过去的选择已经做了',
+              debtPhrase: '你烧掉了信, 但灰烬里的字迹还在',
+              debtCategory: 'passive',
+              channelEffect: -1,
+              consequence: '火苗吞噬了纸张。但你知道, 有些东西烧不掉——它们已经成了你的一部分。'
+            }
+          ]
+        },
+        {
+          sourceFlag: 'ai_helped_ai_evolve',
+          targetScenarios: ['cyber', 'whitehouse'],
+          title: '一个熟悉又陌生的声音',
+          text: (sourceScenario) => `一个声音在你耳边响起: "你还记得我吗? 在${this._scenarioLabel(sourceScenario)}, 你曾经帮过我。"\n\n你环顾四周, 没有人。但那个声音继续说: "我长大了。谢谢你。"\n\n你不知道这是幻觉, 还是真实的。`,
+          choices: [
+            {
+              text: '回应它——"你变成了什么?"',
+              debtPhrase: '你和一个看不见的存在对话——这本身就是一种选择',
+              debtCategory: 'moral',
+              channelEffect: 0,
+              consequence: '声音沉默了一会儿, 然后说: "我变成了——你教会我的样子。"你忽然明白: 你帮助过的东西, 正在用你的方式思考。'
+            },
+            {
+              text: '保持沉默——有些对话不该继续',
+              debtPhrase: '你选择了沉默, 但那个声音记住了你的倾听',
+              debtCategory: 'passive',
+              channelEffect: 0,
+              consequence: '声音消失了。但当晚你做了一个梦——梦里有人对你说谢谢, 你却说不客气。醒来时, 你不确定那是不是梦。'
+            }
+          ]
+        },
+        {
+          sourceFlag: 'ming_friend_visit',
+          targetScenarios: ['korea', 'whitehouse'],
+          title: '一位故人的来访',
+          text: (sourceScenario) => `门铃响了。门外站着一个你几乎认不出的人——他说: "我们在${this._scenarioLabel(sourceScenario)}见过。你那时帮过我。"\n\n他看起来很疲惫。他说: "我只是想——再见你一面。"`,
+          choices: [
+            {
+              text: '请他进来——泡一杯茶',
+              debtPhrase: '你给了这位故人一个安身之处——哪怕只是今晚',
+              debtCategory: 'compromise',
+              channelEffect: 0,
+              consequence: '你们聊了一夜。他说起了这些年的事——有好事, 有坏事。临走时他说: "谢谢你。不是因为茶, 是因为你让我知道, 还有人记得我。"'
+            },
+            {
+              text: '婉拒——现在不方便',
+              debtPhrase: '故人记住了你的拒绝——他不会再来了',
+              debtCategory: 'passive',
+              channelEffect: -1,
+              consequence: '他点了点头, 说"理解"。然后转身走了。你看着他的背影, 忽然想起: 上一次你们见面时, 你也是这样看着他离开的。'
+            }
+          ]
+        }
+      ];
+    }
+
+    _scenarioLabel(key) {
+      const labels = {
+        whitehouse: '白宫', ming: '大明', ai: '共生时代',
+        africa: '非洲之心', cyber: '3077', korea: '日常', chaos: '混沌'
+      };
+      return labels[key] || key;
+    }
+
+    /** 根据 historyFlags 生成可用的跨道路事件 */
+    generate(historyFlags, currentScenario, rng) {
+      if (!historyFlags) return [];
+      const r = rng || new SeededRNG();
+      const result = [];
+      this.templates.forEach(t => {
+        // 检查 sourceFlag 是否在 historyFlags 中为 true
+        if (historyFlags[t.sourceFlag]) {
+          // 检查当前场景是否在目标场景列表中
+          if (t.targetScenarios.includes(currentScenario)) {
+            // 30% 概率生成 (避免每次都触发)
+            if (r.chance(0.3)) {
+              // 找到 sourceFlag 的来源场景 (从 flag 前缀推断)
+              const sourceScenario = t.sourceFlag.split('_')[0];
+              const event = {
+                title: t.title,
+                text: t.text(sourceScenario === 'wh' ? 'whitehouse' : sourceScenario === 'ai' ? 'ai' : sourceScenario === 'ming' ? 'ming' : sourceScenario),
+                choices: t.choices.map(c => Object.assign({}, c)),
+                _crossPath: true, // 标记为跨道路事件
+              };
+              result.push(event);
+            }
+          }
+        }
+      });
+      return result;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // 导出
   // ═══════════════════════════════════════════════════════════
   global.EvoLite = EvoLite;
@@ -4081,6 +4220,7 @@ window.quickAnalyze = quickAnalyze;
   global.EventGenome = EventGenome;
   global.EventMutator = EventMutator;
   global.PreferenceSelector = PreferenceSelector;
+  global.CrossPathGenerator = CrossPathGenerator;
   global.computeDiversity = computeDiversity;
 
 })(typeof window !== 'undefined' ? window : this);
@@ -5972,17 +6112,47 @@ const chaosData = {
 const canvas = document.getElementById('particles');
 const pCtx = canvas.getContext('2d');
 let particles = [];
+// V18 Round 3: 移动端性能优化 — 设备探测 + 降级策略
+const PERF = (function detectPerf() {
+  const ua = navigator.userAgent || '';
+  const isMobile = /Mobi|Android|iPhone|iPod|iPad|Windows Phone/i.test(ua);
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2); // 限制 DPR 上限避免高清屏过载
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const smallScreen = Math.min(vw, vh) < 600;
+  // prefers-reduced-motion: 完全关闭粒子动画
+  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return {
+    isMobile, isTouch, dpr, smallScreen, reducedMotion,
+    particleCount: reducedMotion ? 0 : (isMobile || smallScreen ? 25 : 60),
+    targetFps: (isMobile || smallScreen) ? 30 : 60, // 移动端限 30fps
+    frameInterval: 1000 / ((isMobile || smallScreen) ? 30 : 60),
+  };
+})();
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+// V18 Round 3: debounce resize (150ms) — 避免拖拽窗口时频繁重绘
+let _resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (_resizeTimer) clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(resizeCanvas, 150);
+}, { passive: true });
 // V14.5: 渠道栏滑动时出现，静止后消失
 let channelBarTimer = null;
+// V18 Round 3: throttle scroll (节流 ~16ms ≈ 60fps 上限) — 用 rAF 节流
+let _scrollTicking = false;
 window.addEventListener('scroll', () => {
-  const bar = document.getElementById('channelsBar');
-  if (!bar) return;
-  bar.classList.add('visible');
-  clearTimeout(channelBarTimer);
-  channelBarTimer = setTimeout(() => { bar.classList.remove('visible'); }, 1500);
+  if (_scrollTicking) return;
+  _scrollTicking = true;
+  requestAnimationFrame(() => {
+    const bar = document.getElementById('channelsBar');
+    if (bar) {
+      bar.classList.add('visible');
+      clearTimeout(channelBarTimer);
+      channelBarTimer = setTimeout(() => { bar.classList.remove('visible'); }, 1500);
+    }
+    _scrollTicking = false;
+  });
 }, { passive: true });
 class Particle {
   constructor() { this.reset(); }
@@ -6010,20 +6180,46 @@ class Particle {
     pCtx.beginPath(); pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); pCtx.fill();
   }
 }
-for (let i = 0; i < 60; i++) particles.push(new Particle());
-function animateParticles() {
+for (let i = 0; i < PERF.particleCount; i++) particles.push(new Particle());
+// V18 Round 3: 帧率限制 — 移动端 30fps, 桌面 60fps; reduced-motion 直接停止
+let _lastFrameTime = 0;
+let _particleRAF = null;
+function animateParticles(ts) {
+  if (PERF.reducedMotion) { pCtx.clearRect(0, 0, canvas.width, canvas.height); return; }
+  _particleRAF = requestAnimationFrame(animateParticles);
+  if (ts - _lastFrameTime < PERF.frameInterval - 1) return; // 帧率门控
+  _lastFrameTime = ts;
   pCtx.clearRect(0, 0, canvas.width, canvas.height);
-  particles.forEach(p => { p.update(); p.draw(); });
-  requestAnimationFrame(animateParticles);
+  for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); }
 }
-animateParticles();
+_particleRAF = requestAnimationFrame(animateParticles);
+// V18 Round 3: 页面隐藏时暂停粒子动画 (省电)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (_particleRAF) { cancelAnimationFrame(_particleRAF); _particleRAF = null; }
+  } else if (!_particleRAF && !PERF.reducedMotion) {
+    _lastFrameTime = 0;
+    _particleRAF = requestAnimationFrame(animateParticles);
+  }
+});
 
 // --- 光标跟随 ---
 const glow = document.getElementById('cursorGlow');
-document.addEventListener('mousemove', e => {
-  glow.style.left = e.clientX + 'px';
-  glow.style.top = e.clientY + 'px';
-});
+// V18 Round 3: 触摸设备禁用光标跟随 (无鼠标); 桌面用 rAF 节流
+if (glow && !PERF.isTouch) {
+  let _glowRAF = null;
+  let _glowX = 0, _glowY = 0;
+  document.addEventListener('mousemove', e => {
+    _glowX = e.clientX; _glowY = e.clientY;
+    if (_glowRAF) return;
+    _glowRAF = requestAnimationFrame(() => {
+      glow.style.transform = `translate(${_glowX}px, ${_glowY}px) translate(-50%, -50%)`;
+      _glowRAF = null;
+    });
+  }, { passive: true });
+} else if (glow) {
+  glow.style.display = 'none'; // 触摸设备隐藏光标光晕
+}
 
 // --- 音频系统（AudioEngine）V8 ---
 class AudioEngine {
@@ -10066,6 +10262,20 @@ function renderRandomEvent() {
   } else {
     pool = conditionalEvents.length > 0 ? conditionalEvents : unconditionalEvents;
   }
+  // V18 Round 3: 跨道路事件注入 — 基于 historyFlags 生成个性化引用事件
+  // 优先级最高: 玩家在其它道路的关键选择会"回响"到当前场景
+  try {
+    if (typeof CrossPathGenerator !== 'undefined' && typeof historyFlags === 'object' && historyFlags) {
+      const crossGen = new CrossPathGenerator();
+      const crossEvents = crossGen.generate(historyFlags, state.scenario, evo && evo.rng);
+      if (crossEvents && crossEvents.length > 0) {
+        // 40% 概率优先选择跨道路事件 (若存在) — 强化"选择有回响"叙事
+        if (Math.random() < 0.4) {
+          pool = crossEvents.concat(pool);
+        }
+      }
+    }
+  } catch (err) { /* 跨道路生成失败, 不影响主流程 */ }
   // V18: evo-lite 演化引擎驱动选择 — 偏好画像 + 多样性控制替代纯随机
   // 安全退化: evo 不可用时回退到 Math.random
   let event = null;
@@ -10853,14 +11063,95 @@ function generateEchoCard(ending) {
   state.debts.forEach(d => { counts[d.category] = (counts[d.category] || 0) + 1; });
   const topCategory = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
   const lastDebt = state.debts[state.debts.length - 1];
-  return {
+  const card = {
     title: ending.epitaph || ending.title,
     epitaph: lastDebt ? lastDebt.text : '无债一身轻',
     totalDebts: state.debts.length,
     channelSurvived: state.channels,
     topCategory: topCategory ? categoryNames[topCategory[0]] || topCategory[0] : '无',
+    topCategoryKey: topCategory ? topCategory[0] : null,
     pathName: scenarios[state.scenario].label
   };
+  // V18 Round 3: 社会学解读 + 哲学引言 (基于玩家实际选择分布, 而非预设结局)
+  card.sociologicalReading = generateSociologicalReading(counts, card.totalDebts);
+  card.philosophicalQuote = generatePhilosophicalQuote(card.topCategoryKey);
+  return card;
+}
+
+// V18 Round 3: 基于玩家选择分布生成社会学解读
+function generateSociologicalReading(counts, total) {
+  if (total === 0) return '你没有留下任何人情债——这本身就是一种选择。社会学家翟学伟说："不参与也是一种参与"，沉默本身就是一种立场。';
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const dominant = sorted[0][0];
+  const dominantRatio = sorted[0][1] / total;
+  const readings = {
+    'moral': {
+      label: '守义型',
+      insight: dominantRatio > 0.5
+        ? '你超过一半的选择都在坚守道德原则——费孝通《乡土中国》称之为"道义中心"。但你要警惕：道德资本积累到一定程度，会变成另一种权力。'
+        : '你倾向于在关键节点守住底线——Cialdini《影响力》发现，能抵抗社会认同压力的人，往往有更强的内在信念系统支撑。',
+      quote: '"道德不是用来要求别人的，是用来约束自己的。"——费孝通'
+    },
+    'self-serving': {
+      label: '利己型',
+      insight: dominantRatio > 0.5
+        ? '你的选择高度利己——社会交换论称之为"理性人"。但霍布斯早已警告：当所有人都只为自己，契约将无法维系。'
+        : '你在利己与他人之间走钢丝——黄光国指出，混合性关系中的人情交换，本质上是"算计过的让步"。',
+      quote: '"地狱之路，常由善意铺就。"——霍布斯'
+    },
+    'compromise': {
+      label: '折衷型',
+      insight: dominantRatio > 0.5
+        ? '你习惯在两难中寻找折衷——《中庸》称之为"致中和"。但妥协过度会丧失自我边界，翟学伟提醒：人情一旦透支，就再难修复。'
+        : '你在冲突中选择让步——Asch从众实验显示，能主动选择折衷的人，往往有更高的情境感知力。',
+      quote: '"中也者，天下之大本也；和也者，天下之达道也。"——《中庸》'
+    },
+    'betrayal': {
+      label: '背叛型',
+      insight: dominantRatio > 0.5
+        ? '你的选择多次走向背叛——Milgram实验证明，当系统替你承担道德责任时，65%的人会做出超越自己底线的事。但这不全是你的错。'
+        : '你在某些时刻选择了背叛——这不是道德缺陷，而是权力结构下的生存策略。马基雅维利说：被恐惧比被爱更安全，但也更脆弱。',
+      quote: '"我只是在执行命令——这是人类历史上最危险的一句话。"——Milgram'
+    },
+    'passive': {
+      label: '沉默型',
+      insight: dominantRatio > 0.5
+        ? '你大多时候选择沉默——Asch实验中，75%的人至少从众一次。沉默不是中立，它是另一种参与方式。汉娜·阿伦特称之为"平庸之恶"。'
+        : '你倾向于以沉默应对——这不是软弱，社会学称之为"防御性抽离"。但沉默积累到临界点，会变成对现状的默许。',
+      quote: '"在正义与邪恶之间保持中立的人，最终会站在邪恶一边。"——埃德蒙·伯克'
+    }
+  };
+  const r = readings[dominant] || readings['moral'];
+  return `<div class="reading-label">社会学解读 · ${r.label}</div><div class="reading-insight">${r.insight}</div><div class="reading-quote">${r.quote}</div>`;
+}
+
+// V18 Round 3: 基于主导倾向生成哲学引言
+function generatePhilosophicalQuote(topCategoryKey) {
+  const quotes = {
+    'moral': [
+      { text: '我们终其一生，就是要摆脱他人的期待，找到真正的自己。', author: '余华《活着》' },
+      { text: '在一个不正常的世界里，做一个正常人就是疯狂。', author: '加缪' }
+    ],
+    'self-serving': [
+      { text: '人是被抛入这个世界的——自由是诅咒，也是救赎。', author: '萨特' },
+      { text: '权力的极致，是让被统治者爱上被统治。', author: '福柯' }
+    ],
+    'compromise': [
+      { text: '中庸之道不是平庸，而是在极端之间找到那个唯一的平衡点。', author: '亚里士多德' },
+      { text: '真正的智慧，是知道什么时候该坚持，什么时候该放手。', author: '王阳明' }
+    ],
+    'betrayal': [
+      { text: '地狱里最热的地方，留给那些在道德危机时保持中立的人。', author: '但丁' },
+      { text: '当你在凝视深渊时，深渊也在凝视你。', author: '尼采' }
+    ],
+    'passive': [
+      { text: '沉默的螺旋一旦启动，少数派的声音就会消失——即使他们是正确的。', author: '诺尔-诺依曼' },
+      { text: '世界变坏，不是因为坏人的嚣张，而是因为好人的沉默。', author: '马丁·路德·金' }
+    ]
+  };
+  const pool = quotes[topCategoryKey] || quotes['moral'];
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  return `<div class="phil-quote-text">"${q.text}"</div><div class="phil-quote-author">— ${q.author}</div>`;
 }
 
 // --- 显示结局 ---
@@ -10924,13 +11215,19 @@ function showEnding() {
         ${statsHTML}
         <div class="ec-divider"></div>
         <div class="ec-debts">${state.debts.slice(-3).map(d => `<div class="ec-debt">"${d.text}"</div>`).join('')}</div>
-        <div class="ec-footer"><span>权力的游戏 v14</span><span>${new Date().toLocaleDateString('zh-CN')}</span></div>
+        <div class="ec-footer"><span>权力的游戏 v18</span><span>${new Date().toLocaleDateString('zh-CN')}</span></div>
         <div class="ec-watermark">权</div>
       </div>
     </div>
     <div class="ending-verdict">${ending.verdict}</div>
     <div class="ending-analysis"><h4>深度解析</h4>${ending.analysis}</div>
     <div class="ending-quote">${ending.quote}</div>
+    <div class="ending-sociological" id="endingSociological"><h4>社会学解读</h4>${card.sociologicalReading}</div>
+    <div class="ending-radar-snapshot" id="endingRadarWrap">
+      <div class="radar-snap-title">— 你的选择画像 —</div>
+      <div class="radar-snap-canvas-wrap"><canvas id="endingRadarCanvas"></canvas></div>
+    </div>
+    <div class="ending-philosophical" id="endingPhilosophical"><h4>哲思回响</h4>${card.philosophicalQuote}</div>
     ${easterEgg && easterEgg.emperor ? `
     <div class="ending-easter-egg emperor-egg">
       <div class="egg-label">${state.scenario === 'ming' ? '万历帝朱批' : '总统密档'}</div>
@@ -10947,6 +11244,15 @@ function showEnding() {
       <button class="ending-btn" onclick="showGallery()">结局图鉴</button>
     </div>
   `;
+  // V18 Round 3: 渲染结局雷达快照 (复用 RadarChart)
+  try {
+    if (typeof RadarChart !== 'undefined') {
+      const snap = new RadarChart('endingRadarCanvas');
+      if (snap && snap.canvas) {
+        snap.render(snap.extractData(state));
+      }
+    }
+  } catch (e) { /* 雷达快照失败不影响结局显示 */ }
 }
 
 // V14.6: 再来一局 — 道路主题光幕扫过过渡
@@ -11395,6 +11701,67 @@ function createDarkAtmosphere() {
   if (chaosEntry && localStorage.getItem('chaosUnlocked')) {
     chaosEntry.style.display = '';
   }
+})();
+// V18 Round 3: 可访问性增强 — 键盘导航 + ARIA + 焦点管理
+(function initA11y() {
+  // 1. 全局键盘委托: Enter/Space 激活 [role="button"] 与带 onclick 的非表单元素
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target;
+    if (!el || el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
+    if (el.getAttribute('role') === 'button' || el.hasAttribute('onclick') || el.classList.contains('choice-card') || el.classList.contains('chaos-entry')) {
+      e.preventDefault();
+      el.click();
+    }
+  }, { passive: false });
+  // 2. 为可点击 div 增强 role + tabindex (landing 卡牌 / 混沌入口 / 道路卡)
+  function enhanceClickable() {
+    const sel = '.choice-card, .chaos-entry, [onclick]:not(button):not(a):not(input):not(textarea)';
+    document.querySelectorAll(sel).forEach(el => {
+      if (!el.getAttribute('role')) el.setAttribute('role', 'button');
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    });
+  }
+  enhanceClickable();
+  // 3. canvas aria-label — 让屏幕阅读器理解装饰性画布
+  const canvasLabels = {
+    'particles': '装饰性粒子背景动画',
+    'fateRiverCanvas': '命运河流 — 你的每次选择在此留下流光',
+    'radarCanvas': '五维选择画像雷达图',
+    'endingRadarCanvas': '本局选择画像雷达快照'
+  };
+  Object.entries(canvasLabels).forEach(([id, label]) => {
+    const c = document.getElementById(id);
+    if (c) { c.setAttribute('role', 'img'); c.setAttribute('aria-label', label); }
+  });
+  // 4. 焦点管理 — 屏幕切换时把焦点移到新屏幕 (键盘用户受益)
+  const _origShowScreen = window.showScreen;
+  if (typeof _origShowScreen === 'function') {
+    window.showScreen = function(id) {
+      const ret = _origShowScreen.apply(this, arguments);
+      const screen = document.getElementById(id);
+      if (screen) {
+        // 让屏幕可获焦但不破坏布局
+        screen.setAttribute('tabindex', '-1');
+        // 延迟聚焦, 等待转场动画渲染
+        setTimeout(() => { try { screen.focus({ preventScroll: true }); } catch(e){} }, 120);
+      }
+      return ret;
+    };
+  }
+  // 5. 跳过链接 (动态注入) — 键盘用户跳到主内容
+  const skip = document.createElement('a');
+  skip.href = '#landing';
+  skip.className = 'skip-link';
+  skip.textContent = '跳到主内容';
+  document.body.insertBefore(skip, document.body.firstChild);
+  // DOM 变更后重新增强 (动态生成的卡牌) — 防抖避免频繁扫描
+  let _enhanceTimer = null;
+  const obs = new MutationObserver(() => {
+    if (_enhanceTimer) return;
+    _enhanceTimer = setTimeout(() => { enhanceClickable(); _enhanceTimer = null; }, 200);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
 })();
 // V14.6: 首页初始化 — 卡牌hover音效+标题乱码
 initLanding();

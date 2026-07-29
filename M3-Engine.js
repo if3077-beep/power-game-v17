@@ -6,17 +6,47 @@
 const canvas = document.getElementById('particles');
 const pCtx = canvas.getContext('2d');
 let particles = [];
+// V18 Round 3: 移动端性能优化 — 设备探测 + 降级策略
+const PERF = (function detectPerf() {
+  const ua = navigator.userAgent || '';
+  const isMobile = /Mobi|Android|iPhone|iPod|iPad|Windows Phone/i.test(ua);
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2); // 限制 DPR 上限避免高清屏过载
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const smallScreen = Math.min(vw, vh) < 600;
+  // prefers-reduced-motion: 完全关闭粒子动画
+  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return {
+    isMobile, isTouch, dpr, smallScreen, reducedMotion,
+    particleCount: reducedMotion ? 0 : (isMobile || smallScreen ? 25 : 60),
+    targetFps: (isMobile || smallScreen) ? 30 : 60, // 移动端限 30fps
+    frameInterval: 1000 / ((isMobile || smallScreen) ? 30 : 60),
+  };
+})();
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+// V18 Round 3: debounce resize (150ms) — 避免拖拽窗口时频繁重绘
+let _resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (_resizeTimer) clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(resizeCanvas, 150);
+}, { passive: true });
 // V14.5: 渠道栏滑动时出现，静止后消失
 let channelBarTimer = null;
+// V18 Round 3: throttle scroll (节流 ~16ms ≈ 60fps 上限) — 用 rAF 节流
+let _scrollTicking = false;
 window.addEventListener('scroll', () => {
-  const bar = document.getElementById('channelsBar');
-  if (!bar) return;
-  bar.classList.add('visible');
-  clearTimeout(channelBarTimer);
-  channelBarTimer = setTimeout(() => { bar.classList.remove('visible'); }, 1500);
+  if (_scrollTicking) return;
+  _scrollTicking = true;
+  requestAnimationFrame(() => {
+    const bar = document.getElementById('channelsBar');
+    if (bar) {
+      bar.classList.add('visible');
+      clearTimeout(channelBarTimer);
+      channelBarTimer = setTimeout(() => { bar.classList.remove('visible'); }, 1500);
+    }
+    _scrollTicking = false;
+  });
 }, { passive: true });
 class Particle {
   constructor() { this.reset(); }
@@ -44,20 +74,46 @@ class Particle {
     pCtx.beginPath(); pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); pCtx.fill();
   }
 }
-for (let i = 0; i < 60; i++) particles.push(new Particle());
-function animateParticles() {
+for (let i = 0; i < PERF.particleCount; i++) particles.push(new Particle());
+// V18 Round 3: 帧率限制 — 移动端 30fps, 桌面 60fps; reduced-motion 直接停止
+let _lastFrameTime = 0;
+let _particleRAF = null;
+function animateParticles(ts) {
+  if (PERF.reducedMotion) { pCtx.clearRect(0, 0, canvas.width, canvas.height); return; }
+  _particleRAF = requestAnimationFrame(animateParticles);
+  if (ts - _lastFrameTime < PERF.frameInterval - 1) return; // 帧率门控
+  _lastFrameTime = ts;
   pCtx.clearRect(0, 0, canvas.width, canvas.height);
-  particles.forEach(p => { p.update(); p.draw(); });
-  requestAnimationFrame(animateParticles);
+  for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); }
 }
-animateParticles();
+_particleRAF = requestAnimationFrame(animateParticles);
+// V18 Round 3: 页面隐藏时暂停粒子动画 (省电)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (_particleRAF) { cancelAnimationFrame(_particleRAF); _particleRAF = null; }
+  } else if (!_particleRAF && !PERF.reducedMotion) {
+    _lastFrameTime = 0;
+    _particleRAF = requestAnimationFrame(animateParticles);
+  }
+});
 
 // --- 光标跟随 ---
 const glow = document.getElementById('cursorGlow');
-document.addEventListener('mousemove', e => {
-  glow.style.left = e.clientX + 'px';
-  glow.style.top = e.clientY + 'px';
-});
+// V18 Round 3: 触摸设备禁用光标跟随 (无鼠标); 桌面用 rAF 节流
+if (glow && !PERF.isTouch) {
+  let _glowRAF = null;
+  let _glowX = 0, _glowY = 0;
+  document.addEventListener('mousemove', e => {
+    _glowX = e.clientX; _glowY = e.clientY;
+    if (_glowRAF) return;
+    _glowRAF = requestAnimationFrame(() => {
+      glow.style.transform = `translate(${_glowX}px, ${_glowY}px) translate(-50%, -50%)`;
+      _glowRAF = null;
+    });
+  }, { passive: true });
+} else if (glow) {
+  glow.style.display = 'none'; // 触摸设备隐藏光标光晕
+}
 
 // --- 音频系统（AudioEngine）V8 ---
 class AudioEngine {

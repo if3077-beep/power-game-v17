@@ -26,7 +26,18 @@
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
 *{margin:0;padding:0;box-sizing:border-box;}
+/* V18 Round 3: 移动端触摸适配 — 消除 300ms 点击延迟 + tap 高亮 */
+*{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Serif SC',sans-serif;overflow-x:hidden;line-height:1.8;-webkit-font-smoothing:antialiased;}
+/* V18 Round 3: prefers-reduced-motion 全局降级 */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important;}
+}
+/* V18 Round 3: 可访问性 — 跳过链接 + 键盘焦点可见 */
+.skip-link{position:fixed;top:0;left:0;z-index:10000;background:var(--accent-w);color:#1a1410;padding:0.6rem 1.2rem;font-family:'Noto Serif SC',serif;font-size:0.85rem;text-decoration:none;border-radius:0 0 8px 0;transform:translateY(-120%);transition:transform 0.25s var(--ease-out-expo);}
+.skip-link:focus{transform:translateY(0);outline:none;}
+:focus-visible{outline:2px solid var(--accent-w);outline-offset:3px;border-radius:2px;}
+.choice-card:focus-visible,.chaos-entry:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--accent-w);outline-offset:4px;}
 body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;}
 #particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
 #cursorGlow{position:fixed;width:300px;height:300px;border-radius:50%;pointer-events:none;z-index:1;background:radial-gradient(circle,rgba(201,169,110,0.06) 0%,transparent 70%);transform:translate(-50%,-50%);transition:opacity 0.3s;}
@@ -229,7 +240,20 @@ body.theme-korea .intro-desc, body.theme-korea .intro-situation{line-height:2.4;
 .ending-analysis{max-width:600px;font-size:0.8rem;color:var(--muted);line-height:1.8;margin:0 auto 2rem;text-align:left;padding:1.5rem;background:var(--glass);border:1px solid var(--glass-border);opacity:0;animation:fadeUp 1s ease-out 1.4s both;}
 .ending-analysis h4{color:var(--accent-w);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.8rem;}
 .ending-quote{font-style:italic;color:var(--muted);font-size:0.85rem;margin-bottom:2rem;opacity:0;animation:fadeUp 1s ease-out 1.6s both;}
-.ending-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp 1s ease-out 1.8s both;}
+/* V18 Round 3: 社会学解读 + 哲思回响 + 雷达快照 */
+.ending-sociological{max-width:600px;font-size:0.8rem;color:var(--muted);line-height:1.9;margin:0 auto 2rem;text-align:left;padding:1.5rem;background:var(--glass);border:1px solid var(--glass-border);opacity:0;animation:fadeUp 1s var(--ease-out-expo) 1.7s both;}
+.ending-sociological h4{color:var(--accent-p);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.8rem;}
+.ending-sociological .reading-label{color:var(--accent-w);font-weight:600;font-size:0.78rem;margin-bottom:0.6rem;letter-spacing:0.05em;}
+.ending-sociological .reading-insight{color:var(--text);opacity:0.85;margin-bottom:0.6rem;}
+.ending-sociological .reading-quote{color:var(--accent-w);font-style:italic;opacity:0.75;font-size:0.75rem;border-top:1px solid var(--glass-border);padding-top:0.6rem;}
+.ending-radar-snapshot{max-width:280px;margin:0 auto 2rem;text-align:center;opacity:0;animation:fadeUp 1s var(--ease-out-expo) 1.9s both;}
+.radar-snap-title{font-family:'Noto Serif SC',serif;font-size:0.7rem;letter-spacing:0.2em;color:var(--accent-w);opacity:0.7;margin-bottom:0.8rem;}
+.radar-snap-canvas-wrap{display:flex;justify-content:center;}
+.ending-philosophical{max-width:600px;font-size:0.85rem;color:var(--text);line-height:1.9;margin:0 auto 2rem;text-align:center;padding:1.8rem 2rem;background:var(--glass);border:1px solid var(--glass-border);opacity:0;animation:fadeUp 1s var(--ease-out-expo) 2.1s both;}
+.ending-philosophical h4{color:var(--accent-w);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.8rem;}
+.ending-philosophical .phil-quote-text{font-family:'Noto Serif SC',serif;font-style:italic;font-size:1rem;color:var(--text);opacity:0.9;line-height:1.8;margin-bottom:0.6rem;}
+.ending-philosophical .phil-quote-author{color:var(--accent-w);opacity:0.7;font-size:0.78rem;letter-spacing:0.05em;}
+.ending-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp 1s ease-out 2.3s both;}
 .ending-btn{padding:0.8rem 2rem;background:transparent;border:1px solid var(--card-border);color:var(--text);font-family:'Noto Serif SC',serif;font-size:0.9rem;cursor:pointer;transition:all 0.4s ease;position:relative;overflow:hidden;}
 .ending-btn::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(201,169,110,0.08),transparent 70%);opacity:0;transition:opacity 0.4s ease;}
 .ending-btn:hover{background:rgba(255,255,255,0.06);border-color:var(--accent-w);}

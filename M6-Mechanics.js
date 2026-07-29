@@ -3214,6 +3214,20 @@ function renderRandomEvent() {
   } else {
     pool = conditionalEvents.length > 0 ? conditionalEvents : unconditionalEvents;
   }
+  // V18 Round 3: 跨道路事件注入 — 基于 historyFlags 生成个性化引用事件
+  // 优先级最高: 玩家在其它道路的关键选择会"回响"到当前场景
+  try {
+    if (typeof CrossPathGenerator !== 'undefined' && typeof historyFlags === 'object' && historyFlags) {
+      const crossGen = new CrossPathGenerator();
+      const crossEvents = crossGen.generate(historyFlags, state.scenario, evo && evo.rng);
+      if (crossEvents && crossEvents.length > 0) {
+        // 40% 概率优先选择跨道路事件 (若存在) — 强化"选择有回响"叙事
+        if (Math.random() < 0.4) {
+          pool = crossEvents.concat(pool);
+        }
+      }
+    }
+  } catch (err) { /* 跨道路生成失败, 不影响主流程 */ }
   // V18: evo-lite 演化引擎驱动选择 — 偏好画像 + 多样性控制替代纯随机
   // 安全退化: evo 不可用时回退到 Math.random
   let event = null;
@@ -4001,14 +4015,95 @@ function generateEchoCard(ending) {
   state.debts.forEach(d => { counts[d.category] = (counts[d.category] || 0) + 1; });
   const topCategory = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
   const lastDebt = state.debts[state.debts.length - 1];
-  return {
+  const card = {
     title: ending.epitaph || ending.title,
     epitaph: lastDebt ? lastDebt.text : '无债一身轻',
     totalDebts: state.debts.length,
     channelSurvived: state.channels,
     topCategory: topCategory ? categoryNames[topCategory[0]] || topCategory[0] : '无',
+    topCategoryKey: topCategory ? topCategory[0] : null,
     pathName: scenarios[state.scenario].label
   };
+  // V18 Round 3: 社会学解读 + 哲学引言 (基于玩家实际选择分布, 而非预设结局)
+  card.sociologicalReading = generateSociologicalReading(counts, card.totalDebts);
+  card.philosophicalQuote = generatePhilosophicalQuote(card.topCategoryKey);
+  return card;
+}
+
+// V18 Round 3: 基于玩家选择分布生成社会学解读
+function generateSociologicalReading(counts, total) {
+  if (total === 0) return '你没有留下任何人情债——这本身就是一种选择。社会学家翟学伟说："不参与也是一种参与"，沉默本身就是一种立场。';
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const dominant = sorted[0][0];
+  const dominantRatio = sorted[0][1] / total;
+  const readings = {
+    'moral': {
+      label: '守义型',
+      insight: dominantRatio > 0.5
+        ? '你超过一半的选择都在坚守道德原则——费孝通《乡土中国》称之为"道义中心"。但你要警惕：道德资本积累到一定程度，会变成另一种权力。'
+        : '你倾向于在关键节点守住底线——Cialdini《影响力》发现，能抵抗社会认同压力的人，往往有更强的内在信念系统支撑。',
+      quote: '"道德不是用来要求别人的，是用来约束自己的。"——费孝通'
+    },
+    'self-serving': {
+      label: '利己型',
+      insight: dominantRatio > 0.5
+        ? '你的选择高度利己——社会交换论称之为"理性人"。但霍布斯早已警告：当所有人都只为自己，契约将无法维系。'
+        : '你在利己与他人之间走钢丝——黄光国指出，混合性关系中的人情交换，本质上是"算计过的让步"。',
+      quote: '"地狱之路，常由善意铺就。"——霍布斯'
+    },
+    'compromise': {
+      label: '折衷型',
+      insight: dominantRatio > 0.5
+        ? '你习惯在两难中寻找折衷——《中庸》称之为"致中和"。但妥协过度会丧失自我边界，翟学伟提醒：人情一旦透支，就再难修复。'
+        : '你在冲突中选择让步——Asch从众实验显示，能主动选择折衷的人，往往有更高的情境感知力。',
+      quote: '"中也者，天下之大本也；和也者，天下之达道也。"——《中庸》'
+    },
+    'betrayal': {
+      label: '背叛型',
+      insight: dominantRatio > 0.5
+        ? '你的选择多次走向背叛——Milgram实验证明，当系统替你承担道德责任时，65%的人会做出超越自己底线的事。但这不全是你的错。'
+        : '你在某些时刻选择了背叛——这不是道德缺陷，而是权力结构下的生存策略。马基雅维利说：被恐惧比被爱更安全，但也更脆弱。',
+      quote: '"我只是在执行命令——这是人类历史上最危险的一句话。"——Milgram'
+    },
+    'passive': {
+      label: '沉默型',
+      insight: dominantRatio > 0.5
+        ? '你大多时候选择沉默——Asch实验中，75%的人至少从众一次。沉默不是中立，它是另一种参与方式。汉娜·阿伦特称之为"平庸之恶"。'
+        : '你倾向于以沉默应对——这不是软弱，社会学称之为"防御性抽离"。但沉默积累到临界点，会变成对现状的默许。',
+      quote: '"在正义与邪恶之间保持中立的人，最终会站在邪恶一边。"——埃德蒙·伯克'
+    }
+  };
+  const r = readings[dominant] || readings['moral'];
+  return `<div class="reading-label">社会学解读 · ${r.label}</div><div class="reading-insight">${r.insight}</div><div class="reading-quote">${r.quote}</div>`;
+}
+
+// V18 Round 3: 基于主导倾向生成哲学引言
+function generatePhilosophicalQuote(topCategoryKey) {
+  const quotes = {
+    'moral': [
+      { text: '我们终其一生，就是要摆脱他人的期待，找到真正的自己。', author: '余华《活着》' },
+      { text: '在一个不正常的世界里，做一个正常人就是疯狂。', author: '加缪' }
+    ],
+    'self-serving': [
+      { text: '人是被抛入这个世界的——自由是诅咒，也是救赎。', author: '萨特' },
+      { text: '权力的极致，是让被统治者爱上被统治。', author: '福柯' }
+    ],
+    'compromise': [
+      { text: '中庸之道不是平庸，而是在极端之间找到那个唯一的平衡点。', author: '亚里士多德' },
+      { text: '真正的智慧，是知道什么时候该坚持，什么时候该放手。', author: '王阳明' }
+    ],
+    'betrayal': [
+      { text: '地狱里最热的地方，留给那些在道德危机时保持中立的人。', author: '但丁' },
+      { text: '当你在凝视深渊时，深渊也在凝视你。', author: '尼采' }
+    ],
+    'passive': [
+      { text: '沉默的螺旋一旦启动，少数派的声音就会消失——即使他们是正确的。', author: '诺尔-诺依曼' },
+      { text: '世界变坏，不是因为坏人的嚣张，而是因为好人的沉默。', author: '马丁·路德·金' }
+    ]
+  };
+  const pool = quotes[topCategoryKey] || quotes['moral'];
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  return `<div class="phil-quote-text">"${q.text}"</div><div class="phil-quote-author">— ${q.author}</div>`;
 }
 
 // --- 显示结局 ---
@@ -4072,13 +4167,19 @@ function showEnding() {
         ${statsHTML}
         <div class="ec-divider"></div>
         <div class="ec-debts">${state.debts.slice(-3).map(d => `<div class="ec-debt">"${d.text}"</div>`).join('')}</div>
-        <div class="ec-footer"><span>权力的游戏 v14</span><span>${new Date().toLocaleDateString('zh-CN')}</span></div>
+        <div class="ec-footer"><span>权力的游戏 v18</span><span>${new Date().toLocaleDateString('zh-CN')}</span></div>
         <div class="ec-watermark">权</div>
       </div>
     </div>
     <div class="ending-verdict">${ending.verdict}</div>
     <div class="ending-analysis"><h4>深度解析</h4>${ending.analysis}</div>
     <div class="ending-quote">${ending.quote}</div>
+    <div class="ending-sociological" id="endingSociological"><h4>社会学解读</h4>${card.sociologicalReading}</div>
+    <div class="ending-radar-snapshot" id="endingRadarWrap">
+      <div class="radar-snap-title">— 你的选择画像 —</div>
+      <div class="radar-snap-canvas-wrap"><canvas id="endingRadarCanvas"></canvas></div>
+    </div>
+    <div class="ending-philosophical" id="endingPhilosophical"><h4>哲思回响</h4>${card.philosophicalQuote}</div>
     ${easterEgg && easterEgg.emperor ? `
     <div class="ending-easter-egg emperor-egg">
       <div class="egg-label">${state.scenario === 'ming' ? '万历帝朱批' : '总统密档'}</div>
@@ -4095,6 +4196,15 @@ function showEnding() {
       <button class="ending-btn" onclick="showGallery()">结局图鉴</button>
     </div>
   `;
+  // V18 Round 3: 渲染结局雷达快照 (复用 RadarChart)
+  try {
+    if (typeof RadarChart !== 'undefined') {
+      const snap = new RadarChart('endingRadarCanvas');
+      if (snap && snap.canvas) {
+        snap.render(snap.extractData(state));
+      }
+    }
+  } catch (e) { /* 雷达快照失败不影响结局显示 */ }
 }
 
 // V14.6: 再来一局 — 道路主题光幕扫过过渡
