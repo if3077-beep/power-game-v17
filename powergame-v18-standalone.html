@@ -1392,12 +1392,117 @@ body.theme-ai-bright .game-header{background:linear-gradient(180deg,#f0f4f8 60%,
   75%{transform:translate(-1px,-2px);}
 }
 
+/* ============================================================
+   V18 Round 2: 校准面板 + 雷达图 + 命运河流 + 图鉴 grid
+   ============================================================ */
+
+/* ====== 校准面板 (#calibrate-screen) ====== */
+#calibrate-screen{align-items:center;justify-content:center;text-align:center;padding:2rem;min-height:100vh;}
+.calibrate-container{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:2rem;}
+.cal-title{font-family:'Noto Serif SC',serif;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:900;letter-spacing:0.1em;background:linear-gradient(135deg,var(--text),var(--accent-w));-webkit-background-clip:text;-webkit-text-fill-color:transparent;opacity:0;animation:calTitleIn var(--phase-duration) var(--ease-out-expo) 0.1s forwards;}
+@keyframes calTitleIn{from{opacity:0;transform:translateY(20px) scale(0.98);filter:blur(4px);}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}}
+.cal-sub{font-size:0.85rem;color:var(--muted);line-height:1.8;opacity:0;animation:calFadeIn 0.8s var(--ease-out-expo) 0.3s forwards;}
+@keyframes calFadeIn{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
+
+/* 人格预设选择器 */
+.persona-section{opacity:0;animation:calFadeIn 0.8s var(--ease-out-expo) 0.5s forwards;}
+.persona-section-title{font-family:'Noto Serif SC',serif;font-size:0.9rem;color:var(--accent-w);letter-spacing:0.2em;margin-bottom:1rem;text-transform:uppercase;}
+.persona-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;}
+.persona-card{padding:1rem 0.5rem;background:var(--card-bg);border:1px solid var(--card-border);cursor:pointer;transition:all 0.4s var(--ease-out-expo);text-align:center;position:relative;overflow:hidden;}
+.persona-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--accent-w),transparent);transform:scaleX(0);transition:transform 0.4s ease;}
+.persona-card:hover::before,.persona-card.selected::before{transform:scaleX(1);}
+.persona-card:hover{background:rgba(255,255,255,0.06);transform:translateY(-3px);border-color:rgba(255,255,255,0.12);}
+.persona-card.selected{border-color:var(--accent-w);background:rgba(201,169,110,0.08);box-shadow:var(--glow-w);}
+.persona-icon{font-size:1.6rem;display:block;margin-bottom:0.4rem;}
+.persona-name{font-family:'Noto Serif SC',serif;font-size:0.85rem;font-weight:700;margin-bottom:0.2rem;}
+.persona-desc{font-size:0.7rem;color:var(--muted);line-height:1.5;}
+
+/* slider stack */
+.slider-section{opacity:0;animation:calFadeIn 0.8s var(--ease-out-expo) 0.7s forwards;}
+.slider-section-title{font-family:'Noto Serif SC',serif;font-size:0.9rem;color:var(--accent-w);letter-spacing:0.2em;margin-bottom:1rem;text-transform:uppercase;}
+.slider-stack{display:flex;flex-direction:column;gap:1.4rem;}
+.slider-row{display:flex;flex-direction:column;gap:0.4rem;}
+.slider-info{display:flex;justify-content:space-between;align-items:center;}
+.slider-label{font-family:'Noto Serif SC',serif;font-size:0.85rem;color:var(--text);}
+.slider-val{font-size:0.75rem;color:var(--accent-w);letter-spacing:0.1em;font-weight:600;}
+.range-slider{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;outline:none;cursor:pointer;}
+.range-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent-w);cursor:pointer;box-shadow:var(--glow-w);transition:transform 0.2s ease;}
+.range-slider::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.range-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent-w);cursor:pointer;border:none;box-shadow:var(--glow-w);}
+.slider-range{display:flex;justify-content:space-between;font-size:0.68rem;color:var(--muted);letter-spacing:0.05em;}
+
+.cal-footer{opacity:0;animation:calFadeIn 0.8s var(--ease-out-expo) 0.9s forwards;display:flex;gap:1rem;justify-content:center;}
+.cal-btn{padding:0.9rem 2.5rem;background:transparent;border:1px solid var(--accent-w);color:var(--text);font-family:'Noto Serif SC',serif;font-size:0.95rem;cursor:pointer;transition:all 0.4s var(--ease-out-expo);letter-spacing:0.1em;position:relative;overflow:hidden;}
+.cal-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(201,169,110,0.15),transparent);transition:left 0.6s ease;}
+.cal-btn:hover::before{left:100%;}
+.cal-btn:hover{background:rgba(201,169,110,0.1);transform:translateY(-2px);box-shadow:var(--glow-w);}
+.cal-btn.primary{background:linear-gradient(135deg,rgba(201,169,110,0.12),rgba(201,169,110,0.04));border-color:var(--accent-w);}
+
+/* ====== 雷达图 (debt-panel 内嵌) ====== */
+.radar-section{margin-top:1.5rem;padding:1rem;background:var(--glass);border:1px solid var(--glass-border);}
+.radar-title{font-family:'Noto Serif SC',serif;font-size:0.8rem;color:var(--accent-w);letter-spacing:0.15em;margin-bottom:0.5rem;text-align:center;}
+.radar-canvas-wrap{display:flex;justify-content:center;}
+#radarCanvas{max-width:240px;width:100%;height:auto;}
+
+/* ====== 命运河流 (game-screen 顶部条) ====== */
+.fate-river-wrap{position:fixed;top:0;left:0;width:100%;height:3px;z-index:5;pointer-events:none;opacity:0;transition:opacity 0.6s ease;}
+.fate-river-wrap.visible{opacity:1;}
+#fateRiverCanvas{width:100%;height:3px;display:block;}
+
+/* ====== 多结局图鉴 grid 重构 ====== */
+#gallery-screen{padding:2rem;align-items:center;}
+.gallery-container{max-width:1200px;width:100%;margin:0 auto;}
+.gallery-header{text-align:center;margin-bottom:2rem;}
+.gallery-title{font-family:'Noto Serif SC',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;letter-spacing:0.1em;background:linear-gradient(135deg,var(--text),var(--accent-w));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;}
+.gallery-sub{font-size:0.8rem;color:var(--muted);letter-spacing:0.1em;}
+.gallery-tabs{display:flex;justify-content:center;gap:0.5rem;margin-bottom:2rem;flex-wrap:wrap;}
+.gallery-tab{padding:0.5rem 1.2rem;background:transparent;border:1px solid var(--card-border);color:var(--muted);font-family:'Noto Serif SC',serif;font-size:0.8rem;cursor:pointer;transition:all 0.3s ease;letter-spacing:0.05em;}
+.gallery-tab:hover{border-color:var(--accent-w);color:var(--text);}
+.gallery-tab.active{background:rgba(201,169,110,0.1);border-color:var(--accent-w);color:var(--accent-w);}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;}
+.ending-card{padding:1.2rem;background:var(--card-bg);border:1px solid var(--card-border);transition:all 0.4s var(--ease-out-expo);cursor:pointer;position:relative;overflow:hidden;}
+.ending-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--accent-w),transparent);transform:scaleX(0);transition:transform 0.4s ease;}
+.ending-card:hover::before{transform:scaleX(1);}
+.ending-card:hover{background:rgba(255,255,255,0.05);transform:translateY(-3px);border-color:rgba(255,255,255,0.12);}
+.ending-card.locked{opacity:0.4;filter:grayscale(0.6);cursor:default;}
+.ending-card.locked:hover{transform:none;background:var(--card-bg);}
+.ending-card-icon{font-size:1.8rem;display:block;margin-bottom:0.5rem;}
+.ending-card-title{font-family:'Noto Serif SC',serif;font-size:0.95rem;font-weight:700;margin-bottom:0.3rem;line-height:1.4;}
+.ending-card-scenario{font-size:0.68rem;color:var(--accent-w);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem;}
+.ending-card-desc{font-size:0.75rem;color:var(--muted);line-height:1.6;}
+.ending-card-lock-icon{position:absolute;top:0.8rem;right:0.8rem;font-size:0.9rem;opacity:0.5;}
+
+/* ====== 移动端响应式 ====== */
+@media (max-width:768px){
+  .persona-grid{grid-template-columns:repeat(2,1fr);}
+  .gallery-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.6rem;}
+  .ending-card{padding:0.9rem;}
+  .ending-card-title{font-size:0.85rem;}
+  .calibrate-container{gap:1.5rem;}
+  .slider-stack{gap:1rem;}
+}
+@media (max-width:480px){
+  .persona-grid{grid-template-columns:1fr;}
+  .gallery-grid{grid-template-columns:1fr 1fr;}
+  .gallery-tabs{gap:0.3rem;}
+  .gallery-tab{padding:0.4rem 0.8rem;font-size:0.72rem;}
+  .cal-footer{flex-direction:column;gap:0.6rem;}
+  .cal-btn{width:100%;}
+}
+
+/* ====== 可访问性: prefers-reduced-motion ====== */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
+  .screen.active{animation:none;}
+}
+
 </style>
 </head>
 <body>
 
 <canvas id="particles"></canvas>
 <div id="cursorGlow"></div>
+<div class="fate-river-wrap" id="fateRiverWrap"><canvas id="fateRiverCanvas"></canvas></div>
 <div class="transition-overlay" id="transitionOverlay"></div>
 <div class="transition-swipe" id="transitionSwipe"></div>
 <div class="vignette" id="vignette"></div>
@@ -1506,12 +1611,19 @@ body.theme-ai-bright .game-header{background:linear-gradient(180deg,#f0f4f8 60%,
     <div class="debt-panel-title">人情债记录本</div>
     <div class="debt-scroll" id="debtScroll"></div>
     <div class="debt-count" id="debtCount"></div>
+    <div class="radar-section" id="radarSection">
+      <div class="radar-title">— 你的画像 —</div>
+      <div class="radar-canvas-wrap"><canvas id="radarCanvas"></canvas></div>
+    </div>
   </div>
   <div class="debt-panel-toggle" id="debtToggle" onclick="toggleDebtPanel()">卷 轴</div>
 </div>
 
 <!-- V14: 前置动画屏幕 -->
 <div class="screen" id="prelude-screen"></div>
+
+<!-- V18: 校准屏幕 -->
+<div class="screen" id="calibrate-screen"></div>
 
 <div class="screen" id="ending-screen"></div>
 <div class="screen" id="gallery-screen"></div>
@@ -3975,6 +4087,464 @@ window.quickAnalyze = quickAnalyze;
 
 </script>
 <script>
+/* ===== calibrate.js ===== */
+/**
+ * calibrate.js — V18 Round 2: 校准面板 + 雷达图 + 命运河流 + 图鉴 grid
+ *
+ * 功能:
+ *   1. CalibratePanel   — 开局校准 (人格预设 + 三轴 slider)
+ *   2. RadarChart       — 五维画像雷达图 Canvas (道德/妥协/自私/被动/被动+)
+ *   3. FateRiver        — 选择轨迹河流 Canvas (顶部条)
+ *   4. GalleryGrid      — 多结局图鉴 grid 重构
+ *
+ * 依赖: 无 (纯 JS, Canvas 2D)
+ */
+(function (global) {
+  'use strict';
+
+  // ═══════════════════════════════════════════════════════════
+  // [1] 人格预设 — 6 种, 每种设定三轴默认值
+  // 权力欲(power) / 关系重视度(relation) / 渠道敏感度(channel)
+  // 范围 1-5, 3 为中性
+  // ═══════════════════════════════════════════════════════════
+  const PERSONAS = [
+    { id:'idealist',   icon:'🌟', name:'理想主义者', desc:'原则高于一切',     power:2, relation:4, channel:3 },
+    { id:'pragmatist', icon:'⚖️', name:'实用主义者', desc:'结果导向, 灵活变通', power:4, relation:3, channel:3 },
+    { id:'strategist', icon:'♟️', name:'权谋家',     desc:'深谋远虑, 善用资源', power:5, relation:2, channel:4 },
+    { id:'loneWolf',   icon:'🐺', name:'孤狼',       desc:'独来独往, 不欠人情', power:3, relation:1, channel:2 },
+    { id:'peacemaker', icon:'🕊️', name:'和事佬',     desc:'维系关系, 息事宁人', power:2, relation:5, channel:4 },
+    { id:'gambler',    icon:'🎲', name:'赌徒',       desc:'押注高风险选择',    power:4, relation:2, channel:1 },
+  ];
+
+  const SLIDER_LABELS = {
+    power:   { 1:'淡泊', 2:'低调', 3:'平衡', 4:'进取', 5:'野心' },
+    relation:{ 1:'冷漠', 2:'疏离', 3:'平衡', 4:'重视', 5:'深情' },
+    channel: { 1:'迟钝', 2:'被动', 3:'平衡', 4:'敏锐', 5:'全知' },
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // [2] CalibratePanel — 校准面板控制器
+  // ═══════════════════════════════════════════════════════════
+  class CalibratePanel {
+    constructor() {
+      this.selectedPersona = null;
+      this.values = { power: 3, relation: 3, channel: 3 };
+      this._onComplete = null;
+    }
+
+    /** 渲染校准面板到 #calibrate-screen */
+    show(scenarioKey, onComplete) {
+      this._onComplete = onComplete;
+      const screen = document.getElementById('calibrate-screen');
+      if (!screen) return;
+
+      screen.innerHTML = `
+        <div class="calibrate-container">
+          <div>
+            <h2 class="cal-title">校准你的命运</h2>
+            <p class="cal-sub">在踏入权力之前, 先选择你的处世姿态——它将影响事件如何向你涌来。</p>
+          </div>
+
+          <div class="persona-section">
+            <div class="persona-section-title">— 选择人格底色 —</div>
+            <div class="persona-grid" id="personaGrid">
+              ${PERSONAS.map(p => `
+                <div class="persona-card" data-persona="${p.id}" onclick="calibratePanel.selectPersona('${p.id}')">
+                  <span class="persona-icon">${p.icon}</span>
+                  <div class="persona-name">${p.name}</div>
+                  <div class="persona-desc">${p.desc}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="slider-section">
+            <div class="slider-section-title">— 微调三轴参数 —</div>
+            <div class="slider-stack">
+              <div class="slider-row">
+                <div class="slider-info"><span class="slider-label">权力欲</span><span class="slider-val" id="valPower">平衡</span></div>
+                <input type="range" class="range-slider" id="slPower" min="1" max="5" value="3" oninput="calibratePanel.onSlider('power', this.value)">
+                <div class="slider-range"><span>淡泊</span><span>野心</span></div>
+              </div>
+              <div class="slider-row">
+                <div class="slider-info"><span class="slider-label">关系重视度</span><span class="slider-val" id="valRelation">平衡</span></div>
+                <input type="range" class="range-slider" id="slRelation" min="1" max="5" value="3" oninput="calibratePanel.onSlider('relation', this.value)">
+                <div class="slider-range"><span>冷漠</span><span>深情</span></div>
+              </div>
+              <div class="slider-row">
+                <div class="slider-info"><span class="slider-label">渠道敏感度</span><span class="slider-val" id="valChannel">平衡</span></div>
+                <input type="range" class="range-slider" id="slChannel" min="1" max="5" value="3" oninput="calibratePanel.onSlider('channel', this.value)">
+                <div class="slider-range"><span>迟钝</span><span>全知</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cal-footer">
+            <button class="cal-btn" onclick="calibratePanel.skip()">跳过校准</button>
+            <button class="cal-btn primary" onclick="calibratePanel.confirm()">踏入命运 →</button>
+          </div>
+        </div>
+      `;
+
+      document.body.className = `theme-${scenarioKey}`;
+      showScreen('calibrate-screen');
+      audioEngine.play('chapter');
+    }
+
+    selectPersona(id) {
+      this.selectedPersona = id;
+      const p = PERSONAS.find(x => x.id === id);
+      if (!p) return;
+      // 应用预设值到 slider
+      this.values = { power: p.power, relation: p.relation, channel: p.channel };
+      document.getElementById('slPower').value = p.power;
+      document.getElementById('slRelation').value = p.relation;
+      document.getElementById('slChannel').value = p.channel;
+      this._updateSliderLabels();
+      // 高亮选中卡
+      document.querySelectorAll('.persona-card').forEach(c => c.classList.toggle('selected', c.dataset.persona === id));
+      audioEngine.play('click');
+    }
+
+    onSlider(key, val) {
+      this.values[key] = parseInt(val, 10);
+      this.selectedPersona = null; // 手动调整后取消预设选中
+      document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('selected'));
+      this._updateSliderLabels();
+    }
+
+    _updateSliderLabels() {
+      document.getElementById('valPower').textContent = SLIDER_LABELS.power[this.values.power];
+      document.getElementById('valRelation').textContent = SLIDER_LABELS.relation[this.values.relation];
+      document.getElementById('valChannel').textContent = SLIDER_LABELS.channel[this.values.channel];
+    }
+
+    confirm() {
+      audioEngine.play('click');
+      const persona = this.selectedPersona ? PERSONAS.find(p => p.id === this.selectedPersona) : null;
+      const calibration = {
+        persona: persona ? persona.id : 'custom',
+        personaName: persona ? persona.name : '自定义',
+        values: Object.assign({}, this.values),
+      };
+      if (typeof this._onComplete === 'function') this._onComplete(calibration);
+    }
+
+    skip() {
+      audioEngine.play('click');
+      if (typeof this._onComplete === 'function') this._onComplete(null);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // [3] RadarChart — 五维画像雷达图
+  // 维度: 道德(moral) / 妥协(compromise) / 自私(self-serving) /
+  //       被动(passive) / 主动(active=补偿)
+  // 数据来源: state.debts 的 category 分布
+  // ═══════════════════════════════════════════════════════════
+  class RadarChart {
+    constructor(canvasId) {
+      this.canvas = document.getElementById(canvasId);
+      if (!this.canvas) return;
+      this.ctx = this.canvas.getContext('2d');
+      this.dpr = window.devicePixelRatio || 1;
+      this._setupSize();
+      this.labels = ['道德', '妥协', '自私', '被动', '主动'];
+      this.maxValue = 5;
+    }
+
+    _setupSize() {
+      const w = 240, h = 240;
+      this.canvas.width = w * this.dpr;
+      this.canvas.height = h * this.dpr;
+      this.canvas.style.width = w + 'px';
+      this.canvas.style.height = h + 'px';
+      this.ctx.scale(this.dpr, this.dpr);
+      this.w = w; this.h = h;
+    }
+
+    /** 从游戏 state 提取五维数据 [0, max] */
+    extractData(state) {
+      const counts = { moral: 0, compromise: 0, 'self-serving': 0, passive: 0 };
+      if (state && Array.isArray(state.debts)) {
+        state.debts.forEach(d => {
+          if (counts[d.category] !== undefined) counts[d.category]++;
+        });
+      }
+      const max = Math.max(1, ...Object.values(counts));
+      // 主动 = 总数 - 被动 (选择越多越主动, 但被动多则主动低)
+      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      const active = Math.max(0, total - counts.passive);
+      return [
+        this._scale(counts.moral, max),
+        this._scale(counts.compromise, max),
+        this._scale(counts['self-serving'], max),
+        this._scale(counts.passive, max),
+        this._scale(active, max),
+      ];
+    }
+
+    _scale(v, max) { return max === 0 ? 0 : (v / max) * this.maxValue; }
+
+    /** 渲染雷达图 */
+    render(data) {
+      if (!this.ctx) return;
+      const ctx = this.ctx;
+      const cx = this.w / 2, cy = this.h / 2;
+      const radius = Math.min(cx, cy) - 30;
+      const n = this.labels.length;
+
+      ctx.clearRect(0, 0, this.w, this.h);
+
+      // 背景网格 (5 层)
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      for (let layer = 1; layer <= 5; layer++) {
+        const r = (radius / 5) * layer;
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      // 轴线
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      for (let i = 0; i < n; i++) {
+        const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+        ctx.stroke();
+      }
+
+      // 数据多边形
+      if (data && data.length === n) {
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+          const r = (data[i] / this.maxValue) * radius;
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(201,169,110,0.15)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(201,169,110,0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 顶点
+        ctx.fillStyle = 'rgba(201,169,110,1)';
+        for (let i = 0; i < n; i++) {
+          const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+          const r = (data[i] / this.maxValue) * radius;
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          ctx.beginPath();
+          ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // 标签
+      ctx.fillStyle = 'rgba(232,228,222,0.7)';
+      ctx.font = '11px "Noto Serif SC", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < n; i++) {
+        const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+        const labelR = radius + 16;
+        const x = cx + Math.cos(angle) * labelR;
+        const y = cy + Math.sin(angle) * labelR;
+        ctx.fillText(this.labels[i], x, y);
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // [4] FateRiver — 命运河流 (顶部 3px 条, 选择轨迹流)
+  // 每次选择在河流上留下一道流光, 颜色按 debtCategory 区分
+  // ═══════════════════════════════════════════════════════════
+  class FateRiver {
+    constructor(canvasId) {
+      this.canvas = document.getElementById(canvasId);
+      if (!this.canvas) return;
+      this.ctx = this.canvas.getContext('2d');
+      this.flows = []; // {x, color, alpha, speed}
+      this._running = false;
+      this._resize();
+      window.addEventListener('resize', () => this._resize());
+    }
+
+    _resize() {
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = 3;
+      this.w = this.canvas.width;
+      this.h = 3;
+    }
+
+    /** 添加一道选择流光 */
+    addFlow(debtCategory) {
+      const colors = {
+        moral: '#6b8f71',
+        compromise: '#c9a96e',
+        'self-serving': '#c45c4a',
+        passive: '#6b6560',
+      };
+      const color = colors[debtCategory] || '#c9a96e';
+      this.flows.push({
+        x: -20,
+        color,
+        alpha: 1,
+        speed: 0.5 + Math.random() * 0.3,
+      });
+      if (!this._running) this._start();
+    }
+
+    _start() {
+      this._running = true;
+      const tick = () => {
+        if (!this._running) return;
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.w, this.h);
+
+        // 背景渐变
+        const grad = ctx.createLinearGradient(0, 0, this.w, 0);
+        grad.addColorStop(0, 'rgba(201,169,110,0.02)');
+        grad.addColorStop(0.5, 'rgba(201,169,110,0.05)');
+        grad.addColorStop(1, 'rgba(201,169,110,0.02)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, this.w, this.h);
+
+        // 流光
+        this.flows = this.flows.filter(f => f.x < this.w + 20 && f.alpha > 0.01);
+        this.flows.forEach(f => {
+          f.x += f.speed;
+          f.alpha *= 0.998;
+          // 绘制流光 (带拖尾)
+          const tailLen = 60;
+          const g = ctx.createLinearGradient(f.x - tailLen, 0, f.x, 0);
+          g.addColorStop(0, 'rgba(0,0,0,0)');
+          g.addColorStop(1, f.color);
+          ctx.fillStyle = g;
+          ctx.globalAlpha = f.alpha;
+          ctx.fillRect(f.x - tailLen, 0, tailLen, this.h);
+          ctx.globalAlpha = 1;
+        });
+
+        if (this.flows.length > 0) {
+          requestAnimationFrame(tick);
+        } else {
+          this._running = false;
+        }
+      };
+      requestAnimationFrame(tick);
+    }
+
+    show() {
+      const wrap = this.canvas.parentElement;
+      if (wrap) wrap.classList.add('visible');
+    }
+
+    hide() {
+      const wrap = this.canvas.parentElement;
+      if (wrap) wrap.classList.remove('visible');
+    }
+
+    clear() {
+      this.flows = [];
+      if (this.ctx) this.ctx.clearRect(0, 0, this.w, this.h);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // [5] GalleryGrid — 多结局图鉴 grid (重构版)
+  // 从 localStorage 读取已解锁结局, 渲染响应式 grid
+  // ═══════════════════════════════════════════════════════════
+  class GalleryGrid {
+    constructor(endingsData) {
+      this.endingsData = endingsData || {}; // { scenarioKey: [{id, icon, title, desc}, ...] }
+    }
+
+    render(container, activeTab) {
+      if (!container) return;
+      const tabs = Object.keys(this.endingsData);
+      activeTab = activeTab || tabs[0] || 'whitehouse';
+
+      const unlocked = this._loadUnlocked();
+
+      let html = `
+        <div class="gallery-container">
+          <div class="gallery-header">
+            <h2 class="gallery-title">结局图鉴</h2>
+            <div class="gallery-sub">已解锁 ${unlocked.size} 个结局 · 探索所有可能</div>
+          </div>
+          <div class="gallery-tabs">
+            ${tabs.map(t => `<button class="gallery-tab ${t === activeTab ? 'active' : ''}" onclick="galleryGrid.render(document.querySelector('.gallery-grid-wrap'), '${t}')">${this._tabLabel(t)}</button>`).join('')}
+          </div>
+          <div class="gallery-grid">
+      `;
+
+      const endings = this.endingsData[activeTab] || [];
+      endings.forEach(e => {
+        const isUnlocked = unlocked.has(e.id);
+        html += `
+          <div class="ending-card ${isUnlocked ? '' : 'locked'}" ${isUnlocked ? `onclick="alert('${e.title}\\n\\n${e.desc}')"` : ''}>
+            ${isUnlocked ? '' : '<span class="ending-card-lock-icon">🔒</span>'}
+            <span class="ending-card-icon">${isUnlocked ? e.icon : '❓'}</span>
+            <div class="ending-card-scenario">${this._tabLabel(activeTab)}</div>
+            <div class="ending-card-title">${isUnlocked ? e.title : '???'}</div>
+            <div class="ending-card-desc">${isUnlocked ? e.desc : '尚未解锁这个结局'}</div>
+          </div>
+        `;
+      });
+
+      html += `</div></div>`;
+      container.innerHTML = html;
+    }
+
+    _tabLabel(key) {
+      const labels = {
+        whitehouse: '白宫', ming: '大明', ai: '共生',
+        africa: '非洲', cyber: '3077', korea: '日常', chaos: '混沌',
+      };
+      return labels[key] || key;
+    }
+
+    _loadUnlocked() {
+      // 兼容现有 loadUnlockedEndings 逻辑
+      try {
+        const saved = localStorage.getItem('unlockedEndings');
+        if (saved) {
+          const arr = JSON.parse(saved);
+          return new Set(Array.isArray(arr) ? arr : []);
+        }
+      } catch (e) {}
+      // 没有记录则返回空集 (全部锁定)
+      return new Set();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 导出
+  // ═══════════════════════════════════════════════════════════
+  global.CalibratePanel = CalibratePanel;
+  global.RadarChart = RadarChart;
+  global.FateRiver = FateRiver;
+  global.GalleryGrid = GalleryGrid;
+  global.PERSONAS = PERSONAS;
+  global.SLIDER_LABELS = SLIDER_LABELS;
+
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
 /* ===== M4-Data-WhiteHouse.js ===== */
 // ============================================================
 //  M4: 白宫场景数据
@@ -6108,6 +6678,8 @@ function confirmExit() {
     document.getElementById('vignette').classList.remove('active');
     document.getElementById('scanline').classList.remove('active');
     stopBGM();
+    // V18 Round 2: 隐藏命运河流
+    if (typeof fateRiver !== 'undefined' && fateRiver) fateRiver.hide();
   }
 }
 
@@ -6287,6 +6859,12 @@ const scenarios = { whitehouse: whitehouseData, ming: mingData, ai: aiData, afri
 // V18: evo-lite 演化引擎实例 — 蒸馏自 evo-engine, 偏好驱动事件选择 + 文案突变
 // 零依赖, 渐进增强: 偏好画像为空时退化为随机选择
 const evo = new EvoLite({ seed: Date.now() % 2147483647, mutationRate: 0.15 });
+
+// V18 Round 2: 校准面板 + 雷达图 + 命运河流 + 图鉴 grid 实例
+const calibratePanel = new CalibratePanel();
+let radarChart = null;        // 延迟初始化 (DOM 加载后)
+let fateRiver = null;         // 延迟初始化
+let pendingCalibration = null; // 待应用的校准值
 
 // --- V14: 隐藏道路解锁系统 ---
 const hiddenRoads = {
@@ -7583,11 +8161,19 @@ function showIntro(scenarioKey) {
       <div class="intro-desc intro-anim" style="--i:3">${desc.replace(/\n/g, '<br>')}</div>
       <div class="intro-divider intro-anim" style="--i:4">&mdash; ✦ &mdash;</div>
       <div class="intro-situation intro-anim" style="--i:5">${situation.replace(/\n/g, '<br>')}</div>
-      <button class="intro-btn intro-anim" style="--i:6" onclick="startGame('${scenarioKey}')">踏入命运</button>
+      <button class="intro-btn intro-anim" style="--i:6" onclick="showCalibrate('${scenarioKey}')">踏入命运</button>
     </div>
   `;
   audioEngine.play('chapter');
   transition(() => showScreen('intro-screen'));
+}
+
+// V18 Round 2: 显示校准面板
+function showCalibrate(scenarioKey) {
+  calibratePanel.show(scenarioKey, (calibration) => {
+    pendingCalibration = calibration;
+    startGame(scenarioKey);
+  });
 }
 
 // --- 开始游戏 ---
@@ -7601,6 +8187,17 @@ function startGame(scenarioKey) {
   state = { scenario: scenarioKey, currentScene: 0, debts: [], channels: 5, choices: [], history: [], usedEvents: [], encounterUsed: false, encounterScene: Math.floor(Math.random() * 4) + 2, isHidden, crisisHistory: [], crisisCooldown: 0, crisisStrikes: 0, channelLossCount: 0, extremeChannelTriggered: false, intensity, _brightTheme: state._brightTheme || false };
   resetFlags();
   evo.reset(Date.now() % 2147483647); // V18: 重置演化引擎, 新一局游戏
+  // V18 Round 2: 应用校准值到 state
+  state.calibration = pendingCalibration || null;
+  if (state.calibration) {
+    // 校准值影响初始渠道数 (channel 敏感度高 → 初始渠道多)
+    const chBonus = Math.max(0, state.calibration.values.channel - 3);
+    state.channels = Math.min(8, 5 + chBonus);
+  }
+  // V18 Round 2: 初始化雷达图 + 命运河流
+  if (!radarChart) radarChart = new RadarChart('radarCanvas');
+  if (!fateRiver) fateRiver = new FateRiver('fateRiverCanvas');
+  if (fateRiver) { fateRiver.clear(); fateRiver.show(); }
   renderChannels();
   renderDebtScroll();
   document.body.className = state._brightTheme ? `theme-${scenarioKey}-bright` : `theme-${scenarioKey}`;
@@ -8555,6 +9152,15 @@ function makeChoice(index) {
     state.debts.push({ text: choice.debtPhrase, category: choice.debtCategory, scene: state.currentScene });
     renderDebtScroll();
   }
+
+  // V18 Round 2: 更新雷达图 + 命运河流
+  try {
+    if (radarChart) {
+      const data = radarChart.extractData(state);
+      radarChart.render(data);
+    }
+    if (fateRiver) fateRiver.addFlow(choice.debtCategory);
+  } catch (e) { /* 雷达/河流更新失败不影响游戏 */ }
 
   // V12: 惩罚机制 — 不合理选项扣消息渠道（隐藏道路跳过）
   const penalties = state.isHidden ? [] : checkPenalty(choice, state.scenario, scene.title);
@@ -10542,17 +11148,45 @@ function renderGalleryContent(tab) {
       ${sc.endings.map(e => {
         const isUnlocked = unlocked.includes(e.id);
         const hint = getEndingUnlockHint(e.id);
-        return `<div class="gallery-card ${isUnlocked ? 'unlocked' : 'locked'}">
-          <div class="gc-icon">${isUnlocked ? e.icon : '?'}</div>
-          <div class="gc-title">${isUnlocked ? e.title : '???'}</div>
-          <div class="gc-subtitle">${isUnlocked ? e.subtitle : '未解锁'}</div>
-          <div class="gc-quote">${isUnlocked ? e.quote : hint}</div>
-          ${isUnlocked ? '<div class="gc-unlocked-tag">✓ 已解锁</div>' : ''}
+        return `<div class="ending-card ${isUnlocked ? '' : 'locked'}" ${isUnlocked ? `onclick="showEndingDetail('${e.id}', '${tab}')"` : ''}>
+          ${isUnlocked ? '' : '<span class="ending-card-lock-icon">🔒</span>'}
+          <span class="ending-card-icon">${isUnlocked ? e.icon : '❓'}</span>
+          <div class="ending-card-scenario">${sc.intro.badge} ${sc.label}</div>
+          <div class="ending-card-title">${isUnlocked ? e.title : '???'}</div>
+          <div class="ending-card-desc">${isUnlocked ? (e.subtitle || e.quote || '') : hint}</div>
+          ${isUnlocked ? '<div style="margin-top:0.5rem;font-size:0.68rem;color:var(--accent-w);letter-spacing:0.1em;">✓ 已解锁</div>' : ''}
         </div>`;
       }).join('')}
     </div>
     <button class="gallery-back" onclick="showScreen('landing')">返回首页</button>
   `;
+}
+
+// V18 Round 2: 结局详情查看 (点击已解锁卡片)
+function showEndingDetail(endingId, scenarioKey) {
+  const sc = scenarios[scenarioKey];
+  if (!sc) return;
+  const e = sc.endings.find(x => x.id === endingId);
+  if (!e) return;
+  audioEngine.play('click');
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9500;display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;transition:opacity 0.4s ease;';
+  overlay.innerHTML = `
+    <div style="max-width:500px;background:var(--glass);border:1px solid var(--glass-border);padding:2rem;text-align:center;transform:translateY(20px);transition:transform 0.5s var(--ease-out-expo);">
+      <div style="font-size:3rem;margin-bottom:1rem;">${e.icon}</div>
+      <div style="font-size:0.7rem;color:var(--accent-w);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.5rem;">${sc.intro.badge} ${sc.label}</div>
+      <h3 style="font-family:'Noto Serif SC',serif;font-size:1.4rem;font-weight:900;margin-bottom:0.5rem;background:linear-gradient(135deg,var(--text),var(--accent-w));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${e.title}</h3>
+      ${e.subtitle ? `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;letter-spacing:0.05em;">${e.subtitle}</div>` : ''}
+      ${e.quote ? `<div style="font-family:'Noto Serif SC',serif;font-size:0.9rem;line-height:1.9;color:var(--text);padding:1rem;background:rgba(255,255,255,0.02);border-left:2px solid var(--accent-w);text-align:left;margin-bottom:1rem;">${e.quote}</div>` : ''}
+      <button onclick="this.closest('[style*=fixed]').remove()" style="margin-top:1rem;padding:0.6rem 2rem;background:transparent;border:1px solid var(--accent-w);color:var(--text);font-family:'Noto Serif SC',serif;cursor:pointer;letter-spacing:0.1em;transition:all 0.3s;">关闭</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+    overlay.querySelector('div').style.transform = 'translateY(0)';
+  });
+  overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
 }
 
 // V14.1: 全解锁选项

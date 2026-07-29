@@ -13,6 +13,7 @@
 
 <canvas id="particles"></canvas>
 <div id="cursorGlow"></div>
+<div class="fate-river-wrap" id="fateRiverWrap"><canvas id="fateRiverCanvas"></canvas></div>
 <div class="transition-overlay" id="transitionOverlay"></div>
 <div class="transition-swipe" id="transitionSwipe"></div>
 <div class="vignette" id="vignette"></div>
@@ -121,6 +122,10 @@
     <div class="debt-panel-title">人情债记录本</div>
     <div class="debt-scroll" id="debtScroll"></div>
     <div class="debt-count" id="debtCount"></div>
+    <div class="radar-section" id="radarSection">
+      <div class="radar-title">— 你的画像 —</div>
+      <div class="radar-canvas-wrap"><canvas id="radarCanvas"></canvas></div>
+    </div>
   </div>
   <div class="debt-panel-toggle" id="debtToggle" onclick="toggleDebtPanel()">卷 轴</div>
 </div>
@@ -128,12 +133,16 @@
 <!-- V14: 前置动画屏幕 -->
 <div class="screen" id="prelude-screen"></div>
 
+<!-- V18: 校准屏幕 -->
+<div class="screen" id="calibrate-screen"></div>
+
 <div class="screen" id="ending-screen"></div>
 <div class="screen" id="gallery-screen"></div>
 
 <script src="analysis-engine.js"></script>
 <script src="analysis-renderer.js"></script>
 <script src="evo-lite.js"></script>
+<script src="calibrate.js"></script>
 <script src="M4-Data-WhiteHouse.js"></script>
 <script src="M5-Data-Ming.js"></script>
 <script src="M7-Data-AI.js"></script>

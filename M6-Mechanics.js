@@ -8,6 +8,12 @@ const scenarios = { whitehouse: whitehouseData, ming: mingData, ai: aiData, afri
 // 零依赖, 渐进增强: 偏好画像为空时退化为随机选择
 const evo = new EvoLite({ seed: Date.now() % 2147483647, mutationRate: 0.15 });
 
+// V18 Round 2: 校准面板 + 雷达图 + 命运河流 + 图鉴 grid 实例
+const calibratePanel = new CalibratePanel();
+let radarChart = null;        // 延迟初始化 (DOM 加载后)
+let fateRiver = null;         // 延迟初始化
+let pendingCalibration = null; // 待应用的校准值
+
 // --- V14: 隐藏道路解锁系统 ---
 const hiddenRoads = {
   africa: { unlockKey: 'africaUnlocked', triggerScenario: 'whitehouse', triggerFlag: 'wh_chose_others', desc: '在白宫道路中做出一个关乎「非我族类」的选择' },
@@ -1303,11 +1309,19 @@ function showIntro(scenarioKey) {
       <div class="intro-desc intro-anim" style="--i:3">${desc.replace(/\n/g, '<br>')}</div>
       <div class="intro-divider intro-anim" style="--i:4">&mdash; ✦ &mdash;</div>
       <div class="intro-situation intro-anim" style="--i:5">${situation.replace(/\n/g, '<br>')}</div>
-      <button class="intro-btn intro-anim" style="--i:6" onclick="startGame('${scenarioKey}')">踏入命运</button>
+      <button class="intro-btn intro-anim" style="--i:6" onclick="showCalibrate('${scenarioKey}')">踏入命运</button>
     </div>
   `;
   audioEngine.play('chapter');
   transition(() => showScreen('intro-screen'));
+}
+
+// V18 Round 2: 显示校准面板
+function showCalibrate(scenarioKey) {
+  calibratePanel.show(scenarioKey, (calibration) => {
+    pendingCalibration = calibration;
+    startGame(scenarioKey);
+  });
 }
 
 // --- 开始游戏 ---
@@ -1321,6 +1335,17 @@ function startGame(scenarioKey) {
   state = { scenario: scenarioKey, currentScene: 0, debts: [], channels: 5, choices: [], history: [], usedEvents: [], encounterUsed: false, encounterScene: Math.floor(Math.random() * 4) + 2, isHidden, crisisHistory: [], crisisCooldown: 0, crisisStrikes: 0, channelLossCount: 0, extremeChannelTriggered: false, intensity, _brightTheme: state._brightTheme || false };
   resetFlags();
   evo.reset(Date.now() % 2147483647); // V18: 重置演化引擎, 新一局游戏
+  // V18 Round 2: 应用校准值到 state
+  state.calibration = pendingCalibration || null;
+  if (state.calibration) {
+    // 校准值影响初始渠道数 (channel 敏感度高 → 初始渠道多)
+    const chBonus = Math.max(0, state.calibration.values.channel - 3);
+    state.channels = Math.min(8, 5 + chBonus);
+  }
+  // V18 Round 2: 初始化雷达图 + 命运河流
+  if (!radarChart) radarChart = new RadarChart('radarCanvas');
+  if (!fateRiver) fateRiver = new FateRiver('fateRiverCanvas');
+  if (fateRiver) { fateRiver.clear(); fateRiver.show(); }
   renderChannels();
   renderDebtScroll();
   document.body.className = state._brightTheme ? `theme-${scenarioKey}-bright` : `theme-${scenarioKey}`;
@@ -2275,6 +2300,15 @@ function makeChoice(index) {
     state.debts.push({ text: choice.debtPhrase, category: choice.debtCategory, scene: state.currentScene });
     renderDebtScroll();
   }
+
+  // V18 Round 2: 更新雷达图 + 命运河流
+  try {
+    if (radarChart) {
+      const data = radarChart.extractData(state);
+      radarChart.render(data);
+    }
+    if (fateRiver) fateRiver.addFlow(choice.debtCategory);
+  } catch (e) { /* 雷达/河流更新失败不影响游戏 */ }
 
   // V12: 惩罚机制 — 不合理选项扣消息渠道（隐藏道路跳过）
   const penalties = state.isHidden ? [] : checkPenalty(choice, state.scenario, scene.title);
@@ -4262,17 +4296,45 @@ function renderGalleryContent(tab) {
       ${sc.endings.map(e => {
         const isUnlocked = unlocked.includes(e.id);
         const hint = getEndingUnlockHint(e.id);
-        return `<div class="gallery-card ${isUnlocked ? 'unlocked' : 'locked'}">
-          <div class="gc-icon">${isUnlocked ? e.icon : '?'}</div>
-          <div class="gc-title">${isUnlocked ? e.title : '???'}</div>
-          <div class="gc-subtitle">${isUnlocked ? e.subtitle : '未解锁'}</div>
-          <div class="gc-quote">${isUnlocked ? e.quote : hint}</div>
-          ${isUnlocked ? '<div class="gc-unlocked-tag">✓ 已解锁</div>' : ''}
+        return `<div class="ending-card ${isUnlocked ? '' : 'locked'}" ${isUnlocked ? `onclick="showEndingDetail('${e.id}', '${tab}')"` : ''}>
+          ${isUnlocked ? '' : '<span class="ending-card-lock-icon">🔒</span>'}
+          <span class="ending-card-icon">${isUnlocked ? e.icon : '❓'}</span>
+          <div class="ending-card-scenario">${sc.intro.badge} ${sc.label}</div>
+          <div class="ending-card-title">${isUnlocked ? e.title : '???'}</div>
+          <div class="ending-card-desc">${isUnlocked ? (e.subtitle || e.quote || '') : hint}</div>
+          ${isUnlocked ? '<div style="margin-top:0.5rem;font-size:0.68rem;color:var(--accent-w);letter-spacing:0.1em;">✓ 已解锁</div>' : ''}
         </div>`;
       }).join('')}
     </div>
     <button class="gallery-back" onclick="showScreen('landing')">返回首页</button>
   `;
+}
+
+// V18 Round 2: 结局详情查看 (点击已解锁卡片)
+function showEndingDetail(endingId, scenarioKey) {
+  const sc = scenarios[scenarioKey];
+  if (!sc) return;
+  const e = sc.endings.find(x => x.id === endingId);
+  if (!e) return;
+  audioEngine.play('click');
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9500;display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;transition:opacity 0.4s ease;';
+  overlay.innerHTML = `
+    <div style="max-width:500px;background:var(--glass);border:1px solid var(--glass-border);padding:2rem;text-align:center;transform:translateY(20px);transition:transform 0.5s var(--ease-out-expo);">
+      <div style="font-size:3rem;margin-bottom:1rem;">${e.icon}</div>
+      <div style="font-size:0.7rem;color:var(--accent-w);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.5rem;">${sc.intro.badge} ${sc.label}</div>
+      <h3 style="font-family:'Noto Serif SC',serif;font-size:1.4rem;font-weight:900;margin-bottom:0.5rem;background:linear-gradient(135deg,var(--text),var(--accent-w));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${e.title}</h3>
+      ${e.subtitle ? `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;letter-spacing:0.05em;">${e.subtitle}</div>` : ''}
+      ${e.quote ? `<div style="font-family:'Noto Serif SC',serif;font-size:0.9rem;line-height:1.9;color:var(--text);padding:1rem;background:rgba(255,255,255,0.02);border-left:2px solid var(--accent-w);text-align:left;margin-bottom:1rem;">${e.quote}</div>` : ''}
+      <button onclick="this.closest('[style*=fixed]').remove()" style="margin-top:1rem;padding:0.6rem 2rem;background:transparent;border:1px solid var(--accent-w);color:var(--text);font-family:'Noto Serif SC',serif;cursor:pointer;letter-spacing:0.1em;transition:all 0.3s;">关闭</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+    overlay.querySelector('div').style.transform = 'translateY(0)';
+  });
+  overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
 }
 
 // V14.1: 全解锁选项

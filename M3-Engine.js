@@ -712,6 +712,8 @@ function confirmExit() {
     document.getElementById('vignette').classList.remove('active');
     document.getElementById('scanline').classList.remove('active');
     stopBGM();
+    // V18 Round 2: 隐藏命运河流
+    if (typeof fateRiver !== 'undefined' && fateRiver) fateRiver.hide();
   }
 }
 
