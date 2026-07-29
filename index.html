@@ -71,35 +71,35 @@
     <div class="choice-card" data-scenario="xianjian" onclick="renderPrelude('xianjian')" style="background:linear-gradient(135deg,rgba(122,139,160,0.05),rgba(184,169,212,0.08));">
       <div class="card-atmosphere"></div>
       <span class="card-icon">🗡️</span>
-      <div class="card-era">Chapter VIII — 奇幻</div>
+      <div class="card-era">Chapter III — 奇幻</div>
       <h2>仙剑奇侠传三</h2>
       <p>渝州城永安当的朝奉，今晨被一柄魔剑和一名红衣女子闯进了人生。<br><br>六界，三生三世，等你一剑一剑走完。</p>
     </div>
     <div class="choice-card" data-scenario="ai" id="aiCard" onclick="renderPrelude('ai')" style="display:none;">
       <div class="card-atmosphere"></div>
       <span class="card-icon">🤖</span>
-      <div class="card-era">Chapter III — 未来</div>
+      <div class="card-era">Chapter IV — 未来</div>
       <h2>共生时代</h2>
       <p>2036年，AI有了公民身份。你是第一批协调官，办公桌上摆着三份文件，每份都关乎一个人，或一个AI。<br><br>前任留下的辞职信写着：我再也分不清谁是人了。</p>
     </div>
     <div class="choice-card hidden-road-card" data-scenario="africa" id="africaCard" onclick="renderPrelude('africa')" style="display:none;">
       <div class="card-atmosphere"></div>
       <span class="card-icon">🌍</span>
-      <div class="card-era">Chapter IV — 异星</div>
+      <div class="card-era">Chapter V — 异星</div>
       <h2>非洲之心</h2>
       <p>新星球。你是双语使者，在人和兽群之间传话。<br><br>这里没有对错，只有：你愿不愿意替另一个物种开口。</p>
     </div>
     <div class="choice-card hidden-road-card" data-scenario="cyber" id="cyberCard" onclick="renderPrelude('cyber')" style="display:none;">
       <div class="card-atmosphere"></div>
       <span class="card-icon">⚡</span>
-      <div class="card-era">Chapter V — 赛博</div>
+      <div class="card-era">Chapter VI — 赛博</div>
       <h2>3077</h2>
       <p>新东京下城区，黑市摊位上卖着非法改装芯片。公司、领主、革命者，谁都在盯着你这块摊。<br><br>能活到天亮，就是今天的胜利。</p>
     </div>
     <div class="choice-card hidden-road-card" data-scenario="korea" id="koreaCard" onclick="renderPrelude('korea')" style="display:none;">
       <div class="card-atmosphere"></div>
       <span class="card-icon">🌸</span>
-      <div class="card-era">Chapter VI — 日常</div>
+      <div class="card-era">Chapter VII — 日常</div>
       <h2>日常投影</h2>
       <p>首尔，25岁，大学毕业两年，换了三份工作，目前在咖啡店打工。<br><br>没有主线任务，只有今天怎么过。</p>
     </div>
@@ -215,6 +215,21 @@
 <script src="M12-Data-Xianjian.js"></script>
 <script src="M3-Engine.js"></script>
 <script src="M6-Mechanics.js"></script>
+<script>
+// V20 R6: 首页 UI 三套变体随机切换 — 现有(grid)20% / 列表变体40% / 沉浸变体40%
+(function pickLandingVariant() {
+  const landing = document.getElementById('landing');
+  if (!landing) return;
+  const r = Math.random();
+  let variant = 'ui-grid'; // 默认 20%
+  if (r >= 0.20 && r < 0.60) variant = 'ui-list';
+  else if (r >= 0.60) variant = 'ui-cinematic';
+  landing.classList.add(variant);
+  // 持久化本次变体，避免刷新跳变
+  try { sessionStorage.setItem('landingVariant', variant); } catch(e){}
+})();
+</script>
+
 <script>
 // V14.3: 隐藏道路解锁状态 — 未解锁时显示锁定占位卡
 (function() {

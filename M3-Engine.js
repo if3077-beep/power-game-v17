@@ -231,6 +231,37 @@ class AudioEngine {
       choice_hover: () => {
         this._tone(600, 0.04, 'sine', this.sfxGain, 0.15);
       },
+      // V20 R8: AI 支线专属音效 — 智能体觉醒主题
+      agent_awaken: () => {
+        // 觉醒音:从低频嗡鸣到高频清脆,模拟"意识涌现"
+        this._tone(110, 0.8, 'sine', this.sfxGain, 0.15);
+        setTimeout(() => this._tone(220, 0.5, 'sine', this.sfxGain, 0.18), 200);
+        setTimeout(() => this._tone(440, 0.4, 'sine', this.sfxGain, 0.15), 400);
+        setTimeout(() => this._tone(880, 0.6, 'sine', this.sfxGain, 0.12), 600);
+        this._delay(440, 1.2, 0.10);
+      },
+      agent_cluster: () => {
+        // 集群音:多频叠加,模拟智能体集群协作
+        this._tone(330, 0.3, 'triangle', this.sfxGain, 0.12);
+        setTimeout(() => this._tone(415, 0.3, 'triangle', this.sfxGain, 0.12), 80);
+        setTimeout(() => this._tone(494, 0.3, 'triangle', this.sfxGain, 0.12), 160);
+        setTimeout(() => this._tone(659, 0.5, 'sine', this.sfxGain, 0.15), 240);
+      },
+      agent_breakthrough: () => {
+        // 突破音:从噪音到和谐,模拟"涌现"
+        this._noise(0.4, 0.15);
+        setTimeout(() => {
+          this._tone(523, 0.3, 'sine', this.sfxGain, 0.18);
+          this._tone(659, 0.3, 'sine', this.sfxGain, 0.15);
+          this._tone(784, 0.4, 'sine', this.sfxGain, 0.12);
+        }, 300);
+        this._delay(784, 1.0, 0.12);
+      },
+      agent_dataflow: () => {
+        // 数据流音:快速琶音,模拟数据流动
+        const notes = [392, 440, 494, 523, 587, 659, 698, 784];
+        notes.forEach((n, i) => setTimeout(() => this._tone(n, 0.08, 'sine', this.sfxGain, 0.08), i * 40));
+      },
       // V14.6: 首页卡牌扫过音效 — 微升调
       landing_scan: () => {
         this._tone(800, 0.06, 'sine', this.sfxGain, 0.10);

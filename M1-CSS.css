@@ -1700,3 +1700,109 @@ body.theme-ai-bright .game-header{background:linear-gradient(180deg,#f0f4f8 60%,
   *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
   .screen.active{animation:none;}
 }
+
+/* ============================================================
+   V20 R6: 首页 UI 三套变体
+   默认(grid)20% / ui-list 列表 40% / ui-cinematic 沉浸 40%
+   ============================================================ */
+
+/* —— 变体 B: ui-list — 垂直编年清单 —— */
+#landing.ui-list .choice-cards{
+  flex-direction:column;gap:0;width:100%;max-width:640px;margin:0 auto;
+}
+#landing.ui-list .choice-card{
+  width:100%;padding:1.4rem 1.8rem;display:flex;align-items:center;gap:1.4rem;
+  border-left:3px solid transparent;border-top:1px solid rgba(255,255,255,0.05);
+  border-right:none;border-bottom:none;border-radius:0;background:transparent;
+  transition:all 0.4s cubic-bezier(0.23,1,0.32,1);
+}
+#landing.ui-list .choice-card:first-child{border-top:none;}
+#landing.ui-list .choice-card .card-icon{font-size:1.8rem;margin:0;flex-shrink:0;}
+#landing.ui-list .choice-card .card-era{
+  font-size:0.62rem;letter-spacing:0.25em;margin:0 0 0.3rem 0;color:var(--accent-w);opacity:0.7;
+}
+#landing.ui-list .choice-card h2{
+  font-size:1.15rem;margin:0 0 0.3rem 0;font-family:'Noto Serif SC',serif;
+}
+#landing.ui-list .choice-card p{font-size:0.78rem;margin:0;color:var(--muted);line-height:1.5;}
+#landing.ui-list .choice-card .card-atmosphere{display:none;}
+#landing.ui-list .choice-card:hover{
+  background:rgba(255,255,255,0.04);transform:translateX(8px);border-left-color:var(--accent-w);
+}
+#landing.ui-list .choice-card::before,
+#landing.ui-list .choice-card::after{display:none;}
+#landing.ui-list .choice-cards .choice-card:nth-child(n){
+  animation:landingListIn 0.6s cubic-bezier(0.23,1,0.32,1) both;
+}
+#landing.ui-list .choice-cards .choice-card:nth-child(1){animation-delay:0.5s;}
+#landing.ui-list .choice-cards .choice-card:nth-child(2){animation-delay:0.62s;}
+#landing.ui-list .choice-cards .choice-card:nth-child(3){animation-delay:0.74s;}
+#landing.ui-list .choice-cards .choice-card:nth-child(4){animation-delay:0.86s;}
+#landing.ui-list .choice-cards .choice-card:nth-child(5){animation-delay:0.98s;}
+#landing.ui-list .choice-cards .choice-card:nth-child(6){animation-delay:1.10s;}
+#landing.ui-list .choice-cards .choice-card:nth-child(7){animation-delay:1.22s;}
+@keyframes landingListIn{
+  from{opacity:0;transform:translateX(-20px);}
+  to{opacity:1;transform:translateX(0);}
+}
+@media (max-width:600px){
+  #landing.ui-list .choice-cards{max-width:100%;}
+  #landing.ui-list .choice-card{padding:1.1rem 1.2rem;gap:1rem;}
+  #landing.ui-list .choice-card .card-icon{font-size:1.5rem;}
+  #landing.ui-list .choice-card h2{font-size:1.02rem;}
+  #landing.ui-list .choice-card p{font-size:0.74rem;}
+}
+
+/* —— 变体 C: ui-cinematic — 居中放大沉浸式 —— */
+#landing.ui-cinematic .choice-cards{
+  flex-direction:column;align-items:center;gap:1.6rem;
+}
+#landing.ui-cinematic .choice-card{
+  width:100%;max-width:520px;padding:2.4rem 2rem;text-align:center;
+  border-radius:2px;background:rgba(20,18,16,0.55);
+  border:1px solid rgba(255,255,255,0.06);
+  box-shadow:0 30px 80px rgba(0,0,0,0.5);
+  transition:all 0.6s cubic-bezier(0.23,1,0.32,1);
+}
+#landing.ui-cinematic .choice-card .card-icon{
+  font-size:3.2rem;margin-bottom:1.2rem;display:block;
+  transition:transform 0.5s cubic-bezier(0.23,1,0.32,1);
+}
+#landing.ui-cinematic .choice-card .card-era{
+  font-size:0.72rem;letter-spacing:0.4em;margin-bottom:1.2rem;
+  color:var(--accent-w);opacity:0.85;
+}
+#landing.ui-cinematic .choice-card h2{
+  font-size:1.8rem;margin-bottom:1.2rem;letter-spacing:0.08em;
+}
+#landing.ui-cinematic .choice-card p{
+  font-size:0.88rem;line-height:1.8;color:var(--muted);
+}
+#landing.ui-cinematic .choice-card:hover{
+  transform:translateY(-6px) scale(1.02);
+  background:rgba(30,26,22,0.7);
+  border-color:rgba(201,169,110,0.3);
+  box-shadow:0 40px 100px rgba(0,0,0,0.6),0 0 60px rgba(201,169,110,0.15);
+}
+#landing.ui-cinematic .choice-card:hover .card-icon{transform:scale(1.1) rotate(-2deg);}
+#landing.ui-cinematic .choice-cards .choice-card:nth-child(n){
+  animation:landingCineIn 0.9s cubic-bezier(0.23,1,0.32,1) both;
+}
+#landing.ui-cinematic .choice-cards .choice-card:nth-child(1){animation-delay:0.6s;}
+#landing.ui-cinematic .choice-cards .choice-card:nth-child(2){animation-delay:0.78s;}
+#landing.ui-cinematic .choice-cards .choice-card:nth-child(3){animation-delay:0.96s;}
+#landing.ui-cinematic .choice-cards .choice-card:nth-child(4){animation-delay:1.14s;}
+#landing.ui-cinematic .choice-cards .choice-card:nth-child(5){animation-delay:1.32s;}
+#landing.ui-cinematic .choice-cards .choice-card:nth-child(6){animation-delay:1.50s;}
+#landing.ui-cinematic .choice-cards .choice-card:nth-child(7){animation-delay:1.68s;}
+@keyframes landingCineIn{
+  from{opacity:0;transform:translateY(30px) scale(0.96);filter:blur(6px);}
+  to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+}
+@media (max-width:600px){
+  #landing.ui-cinematic .choice-card{padding:1.8rem 1.3rem;}
+  #landing.ui-cinematic .choice-card .card-icon{font-size:2.4rem;}
+  #landing.ui-cinematic .choice-card h2{font-size:1.4rem;}
+  #landing.ui-cinematic .choice-card p{font-size:0.82rem;}
+}
+
