@@ -1414,11 +1414,13 @@ function startGame(scenarioKey) {
 // V14.3: 场景色调切换
 function setSceneTone(tone) {
   const screen = document.getElementById('game-screen');
-  screen.classList.remove('scene-tone-encounter','scene-tone-crisis','scene-tone-random','scene-tone-final','scene-tone-extreme','scene-tone-normal','scene-tone-dream');
+  screen.classList.remove('scene-tone-encounter','scene-tone-crisis','scene-tone-random','scene-tone-final','scene-tone-extreme','scene-tone-normal','scene-tone-dream','scene-tone-foreshadow');
   if (tone) screen.classList.add(`scene-tone-${tone}`);
 }
 
 function renderScene() {
+  // V20 R6.2: 铺垫事件触发检查(场景渲染前,7%概率,不占章节数)
+  if (maybeTriggerForeshadow()) return;
   setSceneTone('normal');
   const sc = scenarios[state.scenario];
   const rawScene = sc.scenes[state.currentScene];
@@ -2463,10 +2465,10 @@ function makeChoice(index) {
     };
     container.appendChild(nextBtn);
 
-    // V20 R6: 「继续做梦」— 概率出现的插曲分支,多出 2 个梦境章节(每局最多一次)
+    // V20 R6.1: 「继续做梦」— 概率下调至 10%(每局最多一次,场景3+触发)
     if (!state._isTrial && !state._dreamOffered && !state.isHidden
         && state.currentScene >= 3 && state.currentScene < sc.scenes.length - 1
-        && Math.random() < 0.35) {
+        && Math.random() < 0.10) {
       state._dreamOffered = true;
       const dreamBtn = document.createElement('button');
       dreamBtn.className = 'choice-btn dream-btn';
@@ -4924,6 +4926,143 @@ function renderDream() {
     });
   }, 300);
   audioEngine.play('chapter');
+}
+
+// V20 R6.2: 「铺垫事件」— 个位数概率出现的插曲彩蛋,不占章节数
+// 设计:4个通用铺垫事件,场景间随机插入,纯氛围/伏笔,选择轻、惊喜感强
+// 触发:场景2-6区间,每场景7%概率,每局最多2次,不重复同一事件
+const FORESHADOW_EVENTS = [
+  {
+    id: 'echo_letter',
+    icon: '✉️',
+    tag: '回响 · 一封迟到的信',
+    text: '门缝里塞进来一封信。没有署名,没有日期。\n\n信上只有一行字:"你做的那件事,有人记得。"\n\n字迹你认得——是某个你以为早已不在场的人。',
+    narrator: '《论语》:德不孤,必有邻。你以为无人在看的选择,都被人悄悄记下了。',
+    choices: [
+      { text: '把信收进口袋', debtPhrase: '信折好放进内袋;从此你做的每件事,都多一双看不见的眼睛。', debtCategory: 'moral', consequence: '信贴着胸口,有点凉。你没拆第二遍——有些事,知道有人记得就够了。' },
+      { text: '烧掉它', debtPhrase: '火苗舔过字迹,最后一个字消失前,像是冲你笑了一下。', debtCategory: 'passive', consequence: '灰烬从指缝漏下。你以为烧掉了,夜里却梦见那行字,一笔一划,清晰得像刻在眼皮上。' },
+    ]
+  },
+  {
+    id: 'old_face',
+    icon: '👥',
+    tag: '回响 · 一张陌生的脸',
+    text: '人群里,有人冲你点了点头。你不认识他。\n\n但他叫出了你的名字——不是这一世的名字,是你很久以前用过的那个。\n\n他没等你回应,转身就消失在了人海里。',
+    narrator: '《周易》:同声相应,同气相求。有些缘分,前世结下,今生只够点一个头。',
+    choices: [
+      { text: '追上去', debtPhrase: '你挤进人群,他却像水一样散了;追到尽头,只剩一面镜子。', debtCategory: 'moral', consequence: '你停在镜子前。镜子里的人,也冲你点了点头——这一次,你认出他了。' },
+      { text: '不追,继续走自己的路', debtPhrase: '你低头继续走;但那个点头,会在某个深夜,忽然回到你眼前。', debtCategory: 'passive', consequence: '你没回头。但往后每走一段路,都觉得身后有人在看——也许有,也许只是风。' },
+    ]
+  },
+  {
+    id: 'lost_object',
+    icon: '🔮',
+    tag: '伏笔 · 一件不该在此的东西',
+    text: '桌上多了一样东西。你确定它刚才不在那里。\n\n是一件很小的物件——旧得不像这个时代的产物。你拿起它,掌心一阵发烫。\n\n没人进来过。窗是关着的。门也是。',
+    narrator: '《道德经》:玄之又玄,众妙之门。有些东西,是命运提前送来的。',
+    choices: [
+      { text: '把它带上', debtPhrase: '物件握在手里,轻得不像它该有的重量;你多了一份说不清的底。', debtCategory: 'moral', consequence: '你把它收好。后来某一天,该用它的时候,你自然就知道了——此刻不必问。' },
+      { text: '放回原处,当没看见', debtPhrase: '你把它放下,关灯;但黑暗里,它亮了一下,像在说"我等你"。', debtCategory: 'passive', consequence: '你走开。第二天它不在了。你不知道是它自己走的,还是有人替你收走了。' },
+    ]
+  },
+  {
+    id: 'whisper',
+    icon: '🌬️',
+    tag: '伏笔 · 一句没头没尾的话',
+    text: '风里有人说话。声音很轻,像是从很远的地方传过来。\n\n"你这一步,会有人替你还。"\n\n你四下张望,没人。风停了,这句话却留了下来,在你心里转了一整夜。',
+    narrator: '《庄子·知北游》:天地有大美而不言。命运说话,从不大声。',
+    choices: [
+      { text: '记下这句话,等它应验', debtPhrase: '你把这句话刻进心里;从此每还一笔债,都会想:这一笔,是不是有人替我付过。', debtCategory: 'moral', consequence: '后来有一天,你真的发现——某笔账,已经被人悄悄替你平了。你不知道是谁。' },
+      { text: '当它是风,听过就算', debtPhrase: '风过去就过去了;但有些话,你越想忘,它越清晰。', debtCategory: 'passive', consequence: '你笑了笑,继续走。但夜里,这句话又回来了——这一次,你听见了一个名字。' },
+    ]
+  }
+];
+// V20 R6.2: 渲染铺垫事件(插曲式,不占章节数)
+function renderForeshadowEvent(evt) {
+  setSceneTone('foreshadow');
+  const container = document.getElementById('sceneContainer');
+  document.getElementById('levelIndicator').textContent = '插曲';
+  let ambient = document.querySelector('.ambient-glow');
+  if (ambient) { ambient.className = 'ambient-glow foreshadow'; requestAnimationFrame(() => ambient.classList.add('active')); }
+  container.innerHTML = `
+    <div class="foreshadow-card">
+      <div class="foreshadow-icon">${evt.icon}</div>
+      <div class="foreshadow-tag">${evt.tag}</div>
+      <div class="scene-text" id="sceneText"></div>
+      <div class="scene-narrator" id="sceneNarrator"></div>
+      <div class="choices-container" id="choicesContainer"></div>
+    </div>
+  `;
+  const textEl = document.getElementById('sceneText');
+  const narratorEl = document.getElementById('sceneNarrator');
+  const choicesEl = document.getElementById('choicesContainer');
+  const card = container.querySelector('.foreshadow-card');
+  setTimeout(() => { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; card.style.transition = 'all 0.7s cubic-bezier(0.23,1,0.32,1)'; }, 80);
+  setTimeout(() => {
+    textEl.style.opacity = '1'; textEl.style.transform = 'translateY(0)'; textEl.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    typewriter(textEl, evt.text, () => {
+      setTimeout(() => { narratorEl.style.opacity = '1'; narratorEl.style.transform = 'translateY(0)'; narratorEl.style.transition = 'all 0.8s ease'; narratorEl.innerHTML = evt.narrator; }, 250);
+      setTimeout(() => {
+        choicesEl.style.opacity = '1'; choicesEl.style.transform = 'translateY(0)'; choicesEl.style.transition = 'all 0.7s cubic-bezier(0.23,1,0.32,1)';
+        evt.choices.forEach((choice, i) => {
+          const btn = document.createElement('button');
+          btn.className = `choice-btn cat-${choice.debtCategory || 'compromise'} foreshadow-choice`;
+          btn.innerHTML = `<span class="choice-main-text">${choice.text}</span>`;
+          btn.style.opacity = '0'; btn.style.transform = 'translateX(-20px)';
+          btn.onmouseenter = () => audioEngine.play('choice_hover');
+          btn.onclick = () => {
+            audioEngine.play('click');
+            addDebt(choice.debtPhrase, choice.debtCategory, state.currentScene);
+            try { saveSession(); } catch(e) {}
+            document.querySelectorAll('.choices-container .choice-btn').forEach((b, j) => {
+              b.style.pointerEvents = 'none';
+              if (j === i) { b.classList.add('clicked'); b.style.opacity = '1'; } else { b.style.opacity = '0.2'; b.style.filter = 'blur(1px)'; }
+            });
+            const conEl = document.createElement('div');
+            conEl.className = 'consequence-box foreshadow-consequence';
+            conEl.innerHTML = `<div class="consequence-glow"></div><div class="consequence-label">插曲 · 余韵</div><div class="consequence-text">${choice.consequence}</div>`;
+            container.appendChild(conEl);
+            setTimeout(() => { conEl.style.transition = 'all 0.7s cubic-bezier(0.23,1,0.32,1)'; conEl.style.opacity = '1'; conEl.style.transform = 'translateY(0)'; }, 100);
+            setTimeout(() => {
+              const nxt = document.createElement('button');
+              nxt.className = 'choice-btn foreshadow-btn';
+              nxt.style.marginTop = '1.8rem'; nxt.style.opacity = '0';
+              nxt.innerHTML = '继续赶路';
+              nxt.onclick = (e) => {
+                createRipple(e, nxt);
+                setTimeout(() => transition(() => renderScene()), 300);
+              };
+              container.appendChild(nxt);
+              setTimeout(() => { nxt.style.transition = 'all 0.5s ease'; nxt.style.opacity = '1'; }, 100);
+            }, 1600);
+          };
+          choicesEl.appendChild(btn);
+          setTimeout(() => { btn.style.transition = 'all 0.4s ease'; btn.style.opacity = '1'; btn.style.transform = 'translateX(0)'; }, 200 + i * 120);
+        });
+      }, 450);
+    });
+  }, 280);
+  audioEngine.play('chapter');
+}
+// V20 R6.2: 触发铺垫事件检查(在 renderScene 开头调用)
+function maybeTriggerForeshadow() {
+  if (state._isTrial || state.isHidden) return false;
+  if (state._foreshadowCount >= 2) return false;
+  const sc = scenarios[state.scenario];
+  if (!sc || !sc.scenes) return false;
+  // 仅在场景 2-6 区间触发(避开开头/结尾)
+  if (state.currentScene < 1 || state.currentScene > sc.scenes.length - 3) return false;
+  // 7% 概率
+  if (Math.random() > 0.07) return false;
+  // 排除已触发过的事件
+  state._foreshadowSeen = state._foreshadowSeen || [];
+  const available = FORESHADOW_EVENTS.filter(e => !state._foreshadowSeen.includes(e.id));
+  if (available.length === 0) return false;
+  const evt = available[Math.floor(Math.random() * available.length)];
+  state._foreshadowSeen.push(evt.id);
+  state._foreshadowCount = (state._foreshadowCount || 0) + 1;
+  setTimeout(() => transition(() => renderForeshadowEvent(evt)), 50);
+  return true;
 }
 function setupCardHoverSounds() {
   document.querySelectorAll('.choice-card').forEach(card => {
